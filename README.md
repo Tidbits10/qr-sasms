@@ -82,6 +82,27 @@ run/built here — follow the steps below on your own machine.
 
    Open http://localhost:3000.
 
+## Deploy to Render
+
+This repository includes `render.yaml`. In Render, choose **New** → **Blueprint**
+and select this GitHub repository. Render will create both the web service and a
+PostgreSQL database automatically.
+
+Before the first deploy, set these service environment variables in Render:
+
+- `NEXT_PUBLIC_APP_URL` — the final Render URL, for example
+  `https://qr-sasms.onrender.com`. This is required for password-reset links.
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, and `SMTP_FROM` — only if real email
+  delivery is needed. Leave them blank to use the built-in simulated email mode.
+
+The Render build command syncs the current Prisma schema and runs the idempotent
+demo seed once safely. The default first-login accounts are listed below; change
+their passwords immediately after deployment.
+
+> Render's free disk is ephemeral. Files uploaded to the application can be lost
+> after a redeploy or restart. Use an external object-storage service before using
+> the system in production for real student files.
+
 ## Demo logins (created by the seed script)
 
 | Role    | Username                  | Password      |
