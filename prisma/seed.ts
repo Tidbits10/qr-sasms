@@ -38,7 +38,7 @@ async function main() {
     create: {
       email: "admin@pup.edu.ph",
       passwordHash: adminPass,
-      role: "ADMIN",
+      role: "SUPER_ADMIN",
       name: "SSO Admin",
       approved: true,
     },
