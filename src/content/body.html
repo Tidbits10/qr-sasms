@@ -2,8 +2,7 @@
 <div class="bg-scene"></div>
 <a href="#mainNav" class="skip-link">Skip to navigation</a>
 <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div><div class="orb orb-4"></div><div class="orb orb-5"></div><div class="orb orb-6"></div>
-<div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;"></div>
-<button onclick="toggleAccessibility()" aria-label="Accessibility options" style="position:fixed;left:16px;bottom:18px;z-index:1000;border:1px solid rgba(139,26,26,.3);border-radius:999px;background:#fff7ef;color:#8B1A1A;padding:10px 13px;font-weight:800;cursor:pointer;"><i class="fa-solid fa-universal-access"></i> Accessibility</button>
+<div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:2100;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;"></div>
 
 <!-- ═══════════ NAVBAR ═══════════ -->
 <nav id="mainNav" class="glass-nav">
@@ -303,11 +302,11 @@
     </div>
     <div class="layout-2c">
       <div class="glass-card" style="padding:22px;">
-        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:16px;"><i class="fa-solid fa-calendar" style="color:#D4A017;margin-right:8px;"></i>Select a Date</div>
+        <div style="font-size:15px;font-weight:800;color:#1a0505;margin-bottom:16px;"><i class="fa-solid fa-calendar" style="color:#D4A017;margin-right:8px;"></i>Select a Date</div>
         <div id="calendar"></div>
       </div>
       <div class="glass-card" style="padding:22px;">
-        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;"><i class="fa-solid fa-clock" style="color:#D4A017;margin-right:8px;"></i>Available Time Slots</div>
+        <div style="font-size:15px;font-weight:800;color:#1a0505;margin-bottom:4px;"><i class="fa-solid fa-clock" style="color:#D4A017;margin-right:8px;"></i>Available Time Slots</div>
         <div id="selectedDateLabel" style="font-size:11px;color:rgba(30,5,5,.62);margin-bottom:14px;">Select a date first.</div>
         <div id="timeSlots" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
         <div id="confirmCard" style="display:none;margin-top:16px;border:1px solid rgba(245,197,24,.35);border-radius:16px;padding:16px;text-align:center;background:rgba(245,197,24,.05);">
@@ -376,7 +375,7 @@
       </div>
       <!-- Queue -->
       <div class="glass-card" style="padding:20px;">
-        <div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:10px;"><i class="fa-solid fa-users-line" style="color:#D4A017;margin-right:8px;"></i>Today's Queue</div>
+        <div style="font-size:15px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-users-line" style="color:#D4A017;margin-right:8px;"></i>Today's Queue</div>
         <div style="position:relative;margin-bottom:10px;">
           <i class="fa-solid fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(30,5,5,.55);font-size:11px;"></i>
           <input id="queueSearch" type="text" placeholder="Search appointment no. (APT-004), name, or student no…" class="glass-input" style="padding-left:30px;padding-top:7px;padding-bottom:7px;font-size:12px;" oninput="renderQueue()"/>

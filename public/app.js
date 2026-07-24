@@ -122,6 +122,13 @@ const appointmentCalendarYear = new Date().getFullYear();
 const appointmentDateLabel = (day) => new Date(appointmentCalendarYear, appointmentCalendarMonth, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 let prevPage = null;
 let appointmentAvailability = { bookedTimes: [], myAppointment: null };
+let rescheduleCode = null;
+let rescheduleSelectedDate = null;
+let rescheduleSelectedSlot = null;
+let rescheduleCalMonth = new Date().getMonth();
+let rescheduleCalYear = new Date().getFullYear();
+const rescheduleDateLabel = (day) => new Date(rescheduleCalYear, rescheduleCalMonth, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+let rescheduleAvailability = { bookedTimes: [], myAppointment: null };
 let qrRenderedFor = null;
 let donutChart = null;
 let barChartInst = null;
@@ -359,14 +366,6 @@ async function cancelAppointment(code) {
   if (!confirm(`Cancel appointment ${code}?`)) return;
   const result = await api(`/api/queue/${encodeURIComponent(code)}/cancel`, { method: "DELETE" });
   showToast(result.ok ? "✅ Appointment cancelled." : `❌ ${result.error || "Could not cancel appointment."}`, result.ok ? undefined : "rgba(155,22,22,.85)");
-  if (result.ok) renderStudentAppointment();
-}
-
-async function rescheduleAppointment(code) {
-  const dateLabel = prompt("New date (example: August 5, 2026):"); if (!dateLabel) return;
-  const time = prompt("New time (example: 9:00 AM):"); if (!time) return;
-  const result = await api(`/api/queue/${encodeURIComponent(code)}/reschedule`, { method: "POST", body: { dateLabel, time } });
-  showToast(result.ok ? "✅ Appointment rescheduled." : `❌ ${result.error || "Could not reschedule appointment."}`, result.ok ? undefined : "rgba(155,22,22,.85)");
   if (result.ok) renderStudentAppointment();
 }
 
@@ -917,6 +916,56 @@ async function bookAppointment() {
   setTimeout(() => goTo("page-student"), 1200);
 }
 
+function buildRescheduleCalendar() {
+  const container = document.getElementById("rescheduleCalendar");
+  if (!container) return;
+  const year = rescheduleCalYear, month = rescheduleCalMonth;
+  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const first = new Date(year, month, 1).getDay();
+  const total = new Date(year, month + 1, 0).getDate();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let html = `<div style="text-align:center;margin-bottom:12px;font-size:13px;font-weight:800;color:#2a1010;">${new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px;">
+    ${days.map((d) => `<div style="font-size:10px;font-weight:700;color:rgba(30,5,5,.55);padding:4px 0;">${d}</div>`).join("")}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;gap:2px;">`;
+  for (let i = 0; i < first; i++) html += "<div></div>";
+  for (let d = 1; d <= total; d++) {
+    const date = new Date(year, month, d), avail = date >= today && date.getDay() !== 0 && date.getDay() !== 6, past = !avail, isSel = rescheduleSelectedDate === d;
+    if (past) html += `<div class="cal-day-past">${d}</div>`;
+    else if (avail) html += `<div onclick="selectRescheduleDate(${d})" class="cal-day-avail${isSel ? " selected" : ""}">${d}<span class="gold-dot" style="${isSel ? "background:#fff;" : ""}"></span></div>`;
+    else html += `<div class="cal-day-na">${d}</div>`;
+  }
+  container.innerHTML = html + "</div>";
+}
+async function selectRescheduleDate(d) {
+  rescheduleSelectedDate = d; rescheduleSelectedSlot = null;
+  const label = document.getElementById("rescheduleDateLabel");
+  buildRescheduleCalendar();
+  if (label) label.textContent = `${rescheduleDateLabel(d)} — loading availability…`;
+  const { ok, data } = await api(`/api/queue?date=${encodeURIComponent(rescheduleDateLabel(d))}`);
+  rescheduleAvailability = ok ? data : { bookedTimes: [], myAppointment: null };
+  if (label) label.textContent = `${rescheduleDateLabel(d)} — select an available business-hours time slot:`;
+  buildRescheduleSlots();
+}
+function buildRescheduleSlots() {
+  const container = document.getElementById("rescheduleTimeSlots");
+  if (!container) return;
+  const times = ["8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM"];
+  const taken = rescheduleAvailability.bookedTimes || [];
+  const isOwnDate = rescheduleAvailability.myAppointment?.code === rescheduleCode;
+  container.innerHTML = times.map((t) => {
+    const isOwnSlot = isOwnDate && rescheduleAvailability.myAppointment?.time === t;
+    const isTaken = taken.includes(t) && !isOwnSlot;
+    const isSel = rescheduleSelectedSlot === t;
+    return `<button ${isTaken ? "disabled" : ""} onclick="${isTaken ? "" : "selectRescheduleSlot('" + t + "')"}" class="slot-btn${isSel ? " selected" : ""}">${isTaken ? `<s>${t}</s> <small>Booked</small>` : isOwnSlot ? `${t} <small>(current)</small>` : t}</button>`;
+  }).join("");
+}
+function selectRescheduleSlot(t) {
+  rescheduleSelectedSlot = t;
+  buildRescheduleSlots();
+}
+
 /* ──────────────────────────────────────────
    SCANNER (client-side demo affordance — the real, backend-verified flow
    is "Verify by Reference" below via verifyRef())
@@ -1201,21 +1250,6 @@ async function sendReminders() {
   showToast(result.ok ? `✅ Sent ${result.data.appointmentEmails} appointment and ${result.data.readyEmails} document reminders.` : `❌ ${result.error || "Could not send reminders."}`, result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
-function toggleAccessibility() {
-  const large = confirm("Enable larger text? Choose Cancel to keep normal text.");
-  const highContrast = confirm("Enable high contrast? Choose Cancel to keep the normal theme.");
-  document.documentElement.classList.toggle("a11y-large", large);
-  document.documentElement.classList.toggle("a11y-contrast", highContrast);
-  localStorage.setItem("qrsasms-a11y-large", large ? "1" : "0");
-  localStorage.setItem("qrsasms-a11y-contrast", highContrast ? "1" : "0");
-  document.documentElement.classList.add("a11y-keyboard");
-  localStorage.setItem("qrsasms-a11y-keyboard", "1");
-}
-function restoreAccessibility() {
-  document.documentElement.classList.toggle("a11y-large", localStorage.getItem("qrsasms-a11y-large") === "1");
-  document.documentElement.classList.toggle("a11y-contrast", localStorage.getItem("qrsasms-a11y-contrast") === "1");
-  document.documentElement.classList.toggle("a11y-keyboard", localStorage.getItem("qrsasms-a11y-keyboard") === "1");
-}
 
 async function openReports() {
   const analytics = await api("/api/reports/analytics");
@@ -2344,7 +2378,6 @@ function mountVersionBadge() {
    INIT
 ──────────────────────────────────────────── */
 (async function init() {
-  restoreAccessibility();
   mountVersionBadge();
   await refreshMasterlistStatus();
   try {
@@ -2417,18 +2450,6 @@ async function submitFeedback(requestId) {
   showToast(result.ok ? "Thank you for your feedback." : (result.error || "Could not submit feedback."), result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
-function toggleAccessibility() {
-  const large = localStorage.getItem("qrsasms-a11y-large") === "1";
-  const contrast = localStorage.getItem("qrsasms-a11y-contrast") === "1";
-  openAppModal({ title: "Accessibility Options", subtitle: "Choose your preferred display settings. Your choices are saved on this device.", icon: "fa-universal-access", content: `<div class="app-list"><label class="app-row" style="cursor:pointer"><div><div class="app-row-title">Larger text</div><div class="app-row-meta">Increase text size for easier reading.</div></div><input id="a11yLarge" type="checkbox" ${large ? "checked" : ""} style="width:18px;height:18px;accent-color:#8B1A1A"></label><label class="app-row" style="cursor:pointer"><div><div class="app-row-title">High contrast</div><div class="app-row-meta">Increase contrast between content and its background.</div></div><input id="a11yContrast" type="checkbox" ${contrast ? "checked" : ""} style="width:18px;height:18px;accent-color:#8B1A1A"></label></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="saveAccessibilityOptions()">Save preferences</button></div>` });
-}
-function saveAccessibilityOptions() {
-  const y = window.scrollY;
-  const large = !!document.getElementById("a11yLarge")?.checked, contrast = !!document.getElementById("a11yContrast")?.checked;
-  document.documentElement.classList.toggle("a11y-large", large); document.documentElement.classList.toggle("a11y-contrast", contrast); document.documentElement.classList.add("a11y-keyboard");
-  localStorage.setItem("qrsasms-a11y-large", large ? "1" : "0"); localStorage.setItem("qrsasms-a11y-contrast", contrast ? "1" : "0"); localStorage.setItem("qrsasms-a11y-keyboard", "1");
-  closeAppModal(); requestAnimationFrame(() => window.scrollTo({ top: y, left: 0, behavior: "auto" }));
-}
 
 async function cancelAppointment(code) {
   openAppModal({ title: "Cancel Appointment", subtitle: `Cancel appointment ${code}? This action follows the cancellation cutoff in System Settings.`, icon: "fa-calendar-xmark", content: `<div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Keep appointment</button><button class="btn-maroon" onclick="confirmCancelAppointment('${esc(code)}')">Cancel appointment</button></div>` });
@@ -2439,12 +2460,16 @@ async function confirmCancelAppointment(code) {
   showToast(result.ok ? "Appointment cancelled." : (result.error || "Could not cancel appointment."), result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 async function rescheduleAppointment(code) {
-  openAppModal({ title: "Reschedule Appointment", subtitle: "Choose a new date and available business-hours time slot.", icon: "fa-calendar-days", content: `<div class="app-modal-grid">${modalField("New date", "rescheduleDate", "", "full")}${modalField("New time", "rescheduleTime", "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="confirmRescheduleAppointment('${esc(code)}')">Save new schedule</button></div>` });
+  rescheduleCode = code; rescheduleSelectedDate = null; rescheduleSelectedSlot = null;
+  rescheduleCalMonth = new Date().getMonth(); rescheduleCalYear = new Date().getFullYear();
+  rescheduleAvailability = { bookedTimes: [], myAppointment: null };
+  openAppModal({ title: "Reschedule Appointment", subtitle: "Choose a new date and available business-hours time slot.", icon: "fa-calendar-days", wide: true, content: `<div class="app-modal-grid"><div class="app-field full"><label>New date</label><div style="background:rgba(139,26,26,.05);border-radius:14px;padding:16px;margin-top:6px;"><div id="rescheduleCalendar"></div></div></div><div class="app-field full"><label>New time</label><div id="rescheduleDateLabel" style="font-size:11px;color:rgba(30,5,5,.62);margin:6px 0 10px;">Select a date first.</div><div id="rescheduleTimeSlots" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="confirmRescheduleAppointment()">Save new schedule</button></div>` });
+  buildRescheduleCalendar();
 }
-async function confirmRescheduleAppointment(code) {
-  const dateLabel = document.getElementById("rescheduleDate")?.value.trim(), time = document.getElementById("rescheduleTime")?.value.trim();
-  if (!dateLabel || !time) return showToast("Enter both a new date and time.", "rgba(180,130,0,.85)");
-  const result = await api(`/api/queue/${encodeURIComponent(code)}/reschedule`, { method: "POST", body: { dateLabel, time } });
+async function confirmRescheduleAppointment() {
+  if (!rescheduleSelectedDate || !rescheduleSelectedSlot) return showToast("Select both a new date and time.", "rgba(180,130,0,.85)");
+  const dateLabel = rescheduleDateLabel(rescheduleSelectedDate);
+  const result = await api(`/api/queue/${encodeURIComponent(rescheduleCode)}/reschedule`, { method: "POST", body: { dateLabel, time: rescheduleSelectedSlot } });
   if (result.ok) { closeAppModal(); await renderStudentAppointment(); }
   showToast(result.ok ? "Appointment rescheduled." : (result.error || "Could not reschedule appointment."), result.ok ? undefined : "rgba(155,22,22,.85)");
 }
