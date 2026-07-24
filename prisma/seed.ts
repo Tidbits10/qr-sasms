@@ -169,7 +169,7 @@ async function main() {
 
   console.log("Seed complete. Demo logins:");
   console.log("  Student: student@pup.edu.ph / student123  (or student number 2024-00123-SP-0)");
-  console.log("  Admin:   admin@pup.edu.ph / Admin@2026!");
+  console.log("  Super_Admin:   admin@pup.edu.ph / Admin@2026!");
   console.log("  Scanner: scanner@pup.edu.ph / scan2026");
   console.log(`  (student user id: ${student.id})`);
 }
