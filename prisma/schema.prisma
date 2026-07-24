@@ -1,0 +1,288 @@
+// QR-SASMS — Prisma schema
+// Real PostgreSQL-backed data model for the PUP San Pedro SSO portal.
+// Status fields are kept as plain strings (matching the exact labels the
+// original frontend renders, e.g. "Ready to Claim") rather than Prisma enums,
+// so API responses need zero translation before reaching the client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  SUPER_ADMIN
+  SCANNER
+}
+
+
+
+model MasterlistEntry {
+  id        String   @id @default(uuid())
+  sn        String   @unique
+  name      String   @default("")
+  email     String   @default("")
+  course    String   @default("")
+  year      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model DocumentRequest {
+  id           String   @id // REQ-YYYY-NNN
+  studentId    String
+  studentName  String
+  doc          String
+  docKey       String
+  purpose      String
+  copies       Int      @default(1)
+  notes        String   @default("")
+  status       String   @default("Pending") // Pending | Approved | Ready to Claim | Rejected | Completed
+  rejectReason String?
+  rejectedAt   String?
+  rejectedBy   String?
+  claimRef     String?  @unique // CLM-YYYY-NNNNN
+  claimedAt    String?
+  claimedBy    String?
+  reuploadName String?
+  reuploadUrl  String?
+  signature    String?
+  createdAt    DateTime @default(now())
+
+  @@index([studentId])
+  @@index([status])
+}
+
+model QueueEntry {
+  id        String   @id @default(uuid())
+  code      String   @unique // APT-004
+  studentId String
+  name      String
+  time      String
+  dateLabel String
+  served    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+  @@index([dateLabel, time])
+  @@unique([studentId, dateLabel])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  type      String // INFO | WARN | ERROR
+  msg       String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  to        String?
+  name      String
+  ref       String
+  doc       String
+  status    String
+  mode      String // SENT | SIMULATED | FAILED | NO_EMAIL
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  target    String // 'admin' | 'students' | a specific student number
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([target])
+}
+
+model Referral {
+  id        String   @id
+  sn        String
+  name      String
+  category  String
+  details   String
+  status    String   @default("Pending")
+  remarks   String   @default("")
+  history   Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  @@index([sn])
+}
+
+model IdApplication {
+  id        String   @id
+  sn        String
+  name      String
+  type      String
+  reason    String
+  orName    String
+  orUrl     String
+  affidavitName String?
+  affidavitUrl  String?
+  status    String   @default("Pending")
+  remarks   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([sn])
+}
+
+model Bulletin {
+  id        String    @id
+  title     String
+  category  String
+  body      String
+  featured  Boolean   @default(false)
+  status    String    @default("Published") // Published | Archived
+  publishAt DateTime?
+  updatedTs DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Ticket {
+  id        String   @id
+  sn        String
+  name      String
+  category  String
+  subject   String
+  status    String   @default("Open") // Open | Answered | Closed
+  msgs      Json     @default("[]")
+  createdAt DateTime @default(now())
+
+  @@index([sn])
+}
+
+model Faq {
+  id        String   @id
+  cat       String
+  q         String
+  a         String
+  createdAt DateTime @default(now())
+}
+
+model EventRequest {
+  id           String   @id
+  sn           String
+  name         String
+  title        String
+  org          String
+  adviser      String
+  date         String
+  time         String
+  venue        String
+  participants String
+  budget       String   @default("")
+  desc         String
+  type         String
+  docName      String   @default("")
+  docUrl       String?
+  status       String   @default("Pending")
+  history      Json     @default("[]")
+  createdAt    DateTime @default(now())
+
+  @@index([sn])
+}
+
+model Complaint {
+  id        String   @id
+  sn        String
+  name      String
+  category  String
+  details   String
+  attName   String   @default("")
+  attUrl    String?
+  status    String   @default("Submitted")
+  note      String   @default("")
+  confidentiality String @default("Standard") // Standard | Restricted | Strictly Confidential
+  assignedTo       String?
+  staffNotes       String @default("")
+  createdAt DateTime @default(now())
+
+  @@index([sn])
+}
+
+model DownloadableForm {
+  id        String   @id
+  title     String
+  cat       String
+  fileName  String
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Memo {
+  id            String   @id
+  subject       String
+  audienceLabel String
+  recipients    Int
+  by            String
+  mode          String
+  createdAt     DateTime @default(now())
+}
+
+model User {
+  id               String    @id @default(uuid())
+  studentId        String?   @unique // student number, e.g. 2024-00123-SP-0 (null for admin/scanner)
+  email            String    @unique
+  passwordHash     String
+  role             Role
+  name             String
+  course           String?
+  year             String?
+  approved         Boolean   @default(true) // students start false until an SSO admin approves them
+  active           Boolean   @default(true) // staff may be deactivated by a Super Admin
+  resetToken       String?   // Para sa forgot password token
+  resetTokenExpiry DateTime? // Para sa expiry ng reset token
+  createdAt        DateTime  @default(now())
+
+  @@index([studentId])
+  @@index([role])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model ProfileChange {
+  id        String   @id @default(uuid())
+  userId    String
+  studentId String
+  name      String
+  email     String
+  course    String?
+  year      String?
+  status    String   @default("Pending") // Pending | Approved | Rejected
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ServiceFeedback {
+  id        String   @id @default(uuid())
+  requestId String   @unique
+  studentId String
+  rating    Int
+  comment   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+}
+
+model ReminderLog {
+  id        String   @id @default(uuid())
+  reminderKey String @unique
+  createdAt DateTime @default(now())
+}
