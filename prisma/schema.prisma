@@ -10,7 +10,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -19,8 +18,6 @@ enum Role {
   SUPER_ADMIN
   SCANNER
 }
-
-
 
 model MasterlistEntry {
   id        String   @id @default(uuid())
@@ -121,18 +118,18 @@ model Referral {
 }
 
 model IdApplication {
-  id        String   @id
-  sn        String
-  name      String
-  type      String
-  reason    String
-  orName    String
-  orUrl     String
+  id            String   @id
+  sn            String
+  name          String
+  type          String
+  reason        String
+  orName        String
+  orUrl         String
   affidavitName String?
   affidavitUrl  String?
-  status    String   @default("Pending")
-  remarks   String   @default("")
-  createdAt DateTime @default(now())
+  status        String   @default("Pending")
+  remarks       String   @default("")
+  createdAt     DateTime @default(now())
 
   @@index([sn])
 }
@@ -194,19 +191,19 @@ model EventRequest {
 }
 
 model Complaint {
-  id        String   @id
-  sn        String
-  name      String
-  category  String
-  details   String
-  attName   String   @default("")
-  attUrl    String?
-  status    String   @default("Submitted")
-  note      String   @default("")
-  confidentiality String @default("Standard") // Standard | Restricted | Strictly Confidential
-  assignedTo       String?
-  staffNotes       String @default("")
-  createdAt DateTime @default(now())
+  id              String   @id
+  sn              String
+  name            String
+  category        String
+  details         String
+  attName         String   @default("")
+  attUrl          String?
+  status          String   @default("Submitted")
+  note            String   @default("")
+  confidentiality String   @default("Standard") // Standard | Restricted | Strictly Confidential
+  assignedTo      String?
+  staffNotes      String   @default("")
+  createdAt       DateTime @default(now())
 
   @@index([sn])
 }
@@ -282,7 +279,7 @@ model ServiceFeedback {
 }
 
 model ReminderLog {
-  id        String   @id @default(uuid())
-  reminderKey String @unique
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  reminderKey String   @unique
+  createdAt   DateTime @default(now())
 }
