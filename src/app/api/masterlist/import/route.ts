@@ -4,10 +4,14 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
 
-// POST /api/masterlist/import  { rows: [{ sn, name, email, course, year }], fileName? }
-// Replaces the entire masterlist — matches the original client behavior of
-// `MASTERLIST = list` after parsing the uploaded CSV (the CSV itself is
-// still parsed client-side in app.js; only the parsed rows are sent here).
+// POST /api/masterlist/import  { rows: [{ sn, name, email, course, year }], fileName?, scope? }
+// Without `scope`: replaces the entire masterlist — matches the original
+// client behavior of `MASTERLIST = list` after parsing the uploaded CSV.
+// With `scope: { schoolYear, course, year }`: only entries matching that
+// group are replaced, so importing one course/year-level's roster no longer
+// wipes every other group's students.
+// (The CSV itself is still parsed client-side in app.js; only the parsed
+// rows are sent here.)
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -18,8 +22,16 @@ export async function POST(req: NextRequest) {
     return jsonError(400, "No valid student numbers found in the CSV.", "EMPTY_CSV");
   }
 
+  const scope = body?.scope && typeof body.scope === "object" ? body.scope : null;
+  const scopeSchoolYear = scope ? (scope.schoolYear || "").toString().trim() : "";
+  const scopeCourse = scope ? (scope.course || "").toString().trim() : "";
+  const scopeYear = scope ? (scope.year || "").toString().trim() : "";
+  if (scope && (!scopeSchoolYear || !scopeCourse || !scopeYear)) {
+    return jsonError(400, "A scoped import needs a school year, course, and year level.", "INVALID_SCOPE");
+  }
+
   const seen = new Set<string>();
-  const clean: { sn: string; name: string; email: string; course: string; year: string }[] = [];
+  const clean: { sn: string; name: string; email: string; course: string; year: string; schoolYear: string }[] = [];
   for (const r of rows) {
     const sn = normSN(r?.sn);
     if (!sn || seen.has(sn)) continue;
@@ -28,8 +40,9 @@ export async function POST(req: NextRequest) {
       sn,
       name: (r?.name || "").toString().trim(),
       email: (r?.email || "").toString().trim(),
-      course: (r?.course || "").toString().trim(),
-      year: (r?.year || "").toString().trim(),
+      course: scope ? scopeCourse : (r?.course || "").toString().trim(),
+      year: scope ? scopeYear : (r?.year || "").toString().trim(),
+      schoolYear: scope ? scopeSchoolYear : (r?.schoolYear || "").toString().trim(),
     });
   }
   if (!clean.length) {
@@ -37,11 +50,18 @@ export async function POST(req: NextRequest) {
   }
 
   await prisma.$transaction([
-    prisma.masterlistEntry.deleteMany({}),
+    scope
+      ? prisma.masterlistEntry.deleteMany({ where: { schoolYear: scopeSchoolYear, course: scopeCourse, year: scopeYear } })
+      : prisma.masterlistEntry.deleteMany({}),
     prisma.masterlistEntry.createMany({ data: clean }),
   ]);
 
-  await addAudit("INFO", `Masterlist imported — ${clean.length} students from "${body?.fileName || "upload"}".`);
+  await addAudit(
+    "INFO",
+    scope
+      ? `Masterlist group ${scopeSchoolYear} · ${scopeCourse} · ${scopeYear} imported — ${clean.length} students from "${body?.fileName || "upload"}".`
+      : `Masterlist imported — ${clean.length} students from "${body?.fileName || "upload"}".`
+  );
 
   return NextResponse.json({ count: clean.length });
 }

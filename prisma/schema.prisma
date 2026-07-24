@@ -21,13 +21,31 @@ enum Role {
 }
 
 model MasterlistEntry {
-  id        String   @id @default(uuid())
-  sn        String   @unique
-  name      String   @default("")
-  email     String   @default("")
-  course    String   @default("")
-  year      String   @default("")
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  sn         String   @unique
+  name       String   @default("")
+  email      String   @default("")
+  course     String   @default("")
+  year       String   @default("") // year level, e.g. "2nd Year"
+  schoolYear String   @default("") // academic year, e.g. "2025-2026"
+  createdAt  DateTime @default(now())
+}
+
+// A (schoolYear, course, year-level) group within the masterlist, with an
+// optional staff owner (Admin or Super Admin) responsible for it. Not a hard
+// foreign key to MasterlistEntry — group membership is computed by matching
+// those three fields, matching how studentId elsewhere in this schema is a
+// plain string reference rather than a relation.
+model MasterlistGroup {
+  id         String   @id @default(uuid())
+  schoolYear String
+  course     String
+  year       String
+  ownerId    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([schoolYear, course, year])
 }
 
 model DocumentRequest {

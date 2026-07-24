@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession } from "@/lib/http";
+import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
+import { normSN } from "@/lib/format";
 
 // GET /api/masterlist          -> { count } — public, used by the "Masterlist
 //                                   loaded — N students" badge on login/register.
@@ -16,6 +17,32 @@ export async function GET(req: NextRequest) {
   if (auth instanceof NextResponse) return auth;
   const rows = await prisma.masterlistEntry.findMany({ orderBy: { sn: "asc" } });
   return NextResponse.json(rows);
+}
+
+// POST /api/masterlist  { sn, name, email, course, year } — add a single masterlist entry.
+export async function POST(req: NextRequest) {
+  const auth = await requireSession(["admin"]);
+  if (auth instanceof NextResponse) return auth;
+
+  const body = await req.json().catch(() => null);
+  const sn = normSN(body?.sn);
+  if (!sn) return jsonError(400, "Enter a valid student number.", "INVALID_SN");
+
+  const existing = await prisma.masterlistEntry.findUnique({ where: { sn } });
+  if (existing) return jsonError(409, `${sn} is already in the masterlist.`, "SN_EXISTS");
+
+  const entry = await prisma.masterlistEntry.create({
+    data: {
+      sn,
+      name: (body?.name || "").toString().trim(),
+      email: (body?.email || "").toString().trim(),
+      course: (body?.course || "").toString().trim(),
+      year: (body?.year || "").toString().trim(),
+      schoolYear: (body?.schoolYear || "").toString().trim(),
+    },
+  });
+  await addAudit("INFO", `Masterlist entry ${sn} added by ${auth.email}.`);
+  return NextResponse.json(entry, { status: 201 });
 }
 
 // DELETE /api/masterlist — clears the currently imported CSV masterlist.
