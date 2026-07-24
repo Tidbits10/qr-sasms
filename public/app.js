@@ -101,12 +101,11 @@ function updateMasterlistStatus() {
 }
 
 const DOC_LABELS = { gmc: "Good Moral Certificate", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", diploma: "Diploma Copy", other: "Other", ev: "Enrollment Verification" };
-const DOC_HELPS = { gmc: "📄 Good Moral Certificate — Certifies your conduct as a student. Required for employment, further studies, or government transactions.", ev: "✅ Enrollment Verification — Certifies that you are officially enrolled this term, issued by the SSO for scholarships, allowances, and external requirements.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", diploma: "🎓 Diploma Copy — A certified copy of your diploma for record purposes.", other: "📁 Other Documents — Please specify in the additional notes field." };
+const DOC_HELPS = { gmc: "📄 Good Moral Certificate — Certifies your conduct as a student. Required for employment, further studies, or government transactions.", ev: "✅ Enrollment Verification — Certifies that you are officially enrolled this term, issued by the SSO for scholarships, allowances, and external requirements.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
 const DOC_REQUIREMENTS = {
   gmc: ["Valid PUP student ID", "Clear purpose for the request"],
   ev: ["Valid PUP student ID", "Current enrollment details"],
   auth: ["Original or clear copy of the document to authenticate", "Valid PUP student ID"],
-  diploma: ["Valid PUP student ID", "Affidavit of Loss if the original diploma was lost"],
   other: ["Valid PUP student ID", "Describe the requested document in Additional Notes"],
 };
 
@@ -299,27 +298,65 @@ async function updateNav(pageId) {
   const role = session.role === "super_admin" ? "admin" : session.role;
   const links = {
     student: [{ label: "Dashboard", icon: "fa-house", page: "page-student" }, { label: "New Request", icon: "fa-plus", page: "page-request" }, { label: "Appointments", icon: "fa-calendar", page: "page-appointment" }, { label: "Services", icon: "fa-table-cells-large", page: "page-services" }],
-    admin: [{ label: "Dashboard", icon: "fa-gauge", page: "page-admin" }, { label: "Manage", icon: "fa-table-cells-large", page: "page-manage" }, { label: "QR Scanner", icon: "fa-qrcode", page: "page-scanner" }],
+    admin: [{ label: "Dashboard", icon: "fa-gauge", page: "page-admin" }, { label: "Manage", icon: "fa-table-cells-large", page: "page-manage" }],
     scanner: [{ label: "Scanner", icon: "fa-qrcode", page: "page-scanner" }],
   };
   const iconMap = { student: "fa-user-graduate", admin: "fa-shield-halved", scanner: "fa-qrcode" };
   const items = links[role] || links.student;
-  const lh = items.map((l) => `<button onclick="goTo('${l.page}')" class="nav-link ${pageId === l.page ? "active" : ""}"><i class="fa-solid ${l.icon}" style="font-size:11px;"></i>${l.label}</button>`).join("");
-  const ctrl = `<div style="display:flex;align-items:center;gap:6px;margin-left:8px;padding-left:8px;border-left:1px solid rgba(255,255,255,.1);">
+  const ctrl = `<div style="display:flex;align-items:center;gap:6px;">
     <button onclick="toggleBell()" class="nav-link" style="position:relative;padding:7px 11px;" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:99px;background:#dc2626;color:#fff;font-size:9px;font-weight:900;align-items:center;justify-content:center;padding:0 3px;line-height:15px;">0</span></button>
     <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,220,220,.22);border-radius:10px;padding:5px 10px;">
       <div style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.3);display:flex;align-items:center;justify-content:center;"><i class="fa-solid ${iconMap[role]}" style="font-size:10px;color:#F5C518;"></i></div>
       <span style="font-size:12px;font-weight:700;color:rgba(255,220,220,.95);">${session.name.split(" ")[0]}</span>
     </div>
-    <button onclick="signOut()" class="nav-link" style="padding:7px 10px;color:rgba(239,68,68,.7);" aria-label="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
   </div>`;
-  document.getElementById("desktopNavLinks").innerHTML = lh + ctrl;
+  document.getElementById("desktopNavLinks").innerHTML = ctrl;
   updateBellBadge();
   document.getElementById("mobileMenuLinks").innerHTML =
-    items.map((l) => `<button onclick="goTo('${l.page}');document.getElementById('mobileMenu').classList.remove('open');" class="nav-link" style="justify-content:flex-start;"><i class="fa-solid ${l.icon}" style="font-size:11px;color:#F5C518;"></i>${l.label}</button>`).join("") +
-    `<button onclick="signOut()" class="nav-link" style="color:rgba(239,68,68,.7);justify-content:flex-start;margin-top:4px;"><i class="fa-solid fa-right-from-bracket"></i>Sign Out</button>`;
+    items.map((l) => `<button onclick="goTo('${l.page}');closeMobileMenu();" class="nav-link" style="justify-content:flex-start;"><i class="fa-solid ${l.icon}" style="font-size:11px;color:#F5C518;"></i>${l.label}</button>`).join("") +
+    `<div style="height:1px;background:rgba(255,255,255,.14);margin:10px 0;"></div>` +
+    `<button onclick="openSettingsMenu();closeMobileMenu();" class="nav-link" style="justify-content:flex-start;"><i class="fa-solid fa-gear" style="font-size:11px;color:#F5C518;"></i>Settings</button>` +
+    `<button onclick="signOut()" class="nav-link" style="color:rgba(239,68,68,.7);justify-content:flex-start;margin-top:4px;"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>`;
 }
-function toggleMobileMenu() { document.getElementById("mobileMenu").classList.toggle("open"); }
+async function openSettingsMenu() {
+  const items = [
+    { label: "Account Information", icon: "fa-id-badge", action: "openAccountInfo()" },
+    ...(session?.role === "student" ? [{ label: "Edit Profile", icon: "fa-user-pen", action: "requestProfileEdit()" }] : []),
+    { label: "Change Password", icon: "fa-key", action: "openChangePassword()" },
+  ];
+  openAppModal({ title: "Settings", subtitle: "Manage your account.", icon: "fa-gear", content: `<div class="app-list">${items.map((it) => `<div class="app-row"><div class="app-row-title"><i class="fa-solid ${it.icon}" style="color:#8B1A1A;margin-right:8px;"></i>${esc(it.label)}</div><button class="btn-soft" onclick="${it.action}">Open</button></div>`).join("")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button></div>` });
+}
+function openAccountInfo() {
+  const u = session || {};
+  const roleLabel = (u.role || "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  const rows = [
+    { label: "Name", value: u.name || "" },
+    { label: "Email", value: u.email || "" },
+    ...(u.role === "student" ? [{ label: "Student Number", value: u.id || "" }] : []),
+    { label: "Role", value: roleLabel },
+    ...(u.course ? [{ label: "Course", value: u.course }] : []),
+    ...(u.year ? [{ label: "Year Level", value: u.year }] : []),
+  ];
+  openAppModal({ title: "Account Information", subtitle: "Your account details on file.", icon: "fa-id-badge", content: `<div class="app-list">${rows.map((r) => `<div class="app-row"><div><div class="app-row-title">${esc(r.label)}</div><div class="app-row-meta">${esc(r.value)}</div></div></div>`).join("")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="openSettingsMenu()">Back</button></div>` });
+}
+function pwField(label, id, extra = "") {
+  return `<div class="app-field ${extra}"><label for="${id}">${esc(label)}</label><div style="position:relative;"><input id="${id}" type="password" class="glass-input" style="padding-right:38px;"><button type="button" onclick="togglePass('${id}',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(30,5,5,.55);cursor:pointer;font-size:13px;" aria-label="Toggle"><i class="fa-solid fa-eye"></i></button></div></div>`;
+}
+function openChangePassword() {
+  openAppModal({ title: "Change Password", subtitle: "Choose a new password of at least 6 characters.", icon: "fa-key", content: `<div class="app-modal-grid">${pwField("Current password", "cpCurrent", "full")}${pwField("New password", "cpNew")}${pwField("Confirm new password", "cpConfirm")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="openSettingsMenu()">Back</button><button class="btn-maroon" onclick="submitChangePassword()">Update password</button></div>` });
+}
+async function submitChangePassword() {
+  const currentPassword = document.getElementById("cpCurrent")?.value;
+  const newPassword = document.getElementById("cpNew")?.value;
+  const confirmPassword = document.getElementById("cpConfirm")?.value;
+  if (!currentPassword || !newPassword) return showToast("Enter your current and new password.", "rgba(180,130,0,.85)");
+  if (newPassword !== confirmPassword) return showToast("New passwords do not match.", "rgba(180,130,0,.85)");
+  const result = await api("/api/auth/change-password", { method: "POST", body: { currentPassword, newPassword } });
+  if (result.ok) { showToast("Password updated."); return closeAppModal(); }
+  showToast(result.error || "Could not update password.", "rgba(155,22,22,.85)");
+}
+function toggleMobileMenu() { document.getElementById("mobileMenu").classList.toggle("open"); document.getElementById("mobileMenuBackdrop").classList.toggle("open"); }
+function closeMobileMenu() { document.getElementById("mobileMenu").classList.remove("open"); document.getElementById("mobileMenuBackdrop").classList.remove("open"); }
 async function signOut() {
   await api("/api/auth/logout", { method: "POST" });
   session = null;
@@ -1020,86 +1057,6 @@ function parseCSV(text) {
   return rows.filter((r) => r.some((c) => (c || "").trim() !== ""));
 }
 
-function handleCSV(input) {
-  if (!input.files.length) return;
-  const file = input.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const rows = parseCSV(e.target.result);
-      if (!rows.length) { showToast("⚠️ The CSV file is empty.", "rgba(180,130,0,.85)"); return; }
-
-      const norm = (s) => (s || "").toLowerCase().replace(/[\s_-]/g, "");
-      const SN = ["studentnumber", "studentno", "studentid", "studno", "studnum", "srcode", "idnumber", "id", "number"];
-      const NM = ["name", "fullname", "studentname", "completename"];
-      const FN = ["firstname", "fname", "givenname"];
-      const LN = ["lastname", "lname", "surname", "familyname"];
-      const EM = ["email", "emailaddress", "pupemail", "mail"];
-      const CR = ["course", "program", "degree", "curriculum"];
-      const YR = ["year", "yearlevel", "yearlvl", "level"];
-
-      const header = rows[0].map(norm);
-      const has = (arr) => header.some((h) => arr.includes(h));
-      const idxOf = (arr) => header.findIndex((h) => arr.includes(h));
-      const hasHeader = has(SN) || has(NM) || has(EM) || has(FN) || has(LN) || has(CR) || has(YR);
-
-      let iSN, iNM, iFN, iLN, iEM, iCR, iYR, dataRows;
-      if (hasHeader) {
-        iSN = idxOf(SN); iNM = idxOf(NM); iFN = idxOf(FN); iLN = idxOf(LN); iEM = idxOf(EM); iCR = idxOf(CR); iYR = idxOf(YR);
-        if (iSN === -1) iSN = 0;
-        dataRows = rows.slice(1);
-      } else {
-        iSN = 0; iNM = 1; iEM = 2; iFN = -1; iLN = -1; iCR = -1; iYR = -1;
-        dataRows = rows;
-      }
-
-      const list = [];
-      const seen = new Set();
-      dataRows.forEach((r) => {
-        const sn = (r[iSN] || "").toString().trim().toUpperCase();
-        if (!sn || seen.has(sn)) return;
-        seen.add(sn);
-        let name = iNM > -1 ? (r[iNM] || "").trim() : "";
-        if (!name && (iFN > -1 || iLN > -1)) name = `${iFN > -1 ? (r[iFN] || "").trim() : ""} ${iLN > -1 ? (r[iLN] || "").trim() : ""}`.trim();
-        const email = iEM > -1 ? (r[iEM] || "").trim() : "";
-        const course = iCR > -1 ? (r[iCR] || "").trim() : "";
-        const year = iYR > -1 ? (r[iYR] || "").trim() : "";
-        list.push({ sn, name, email, course, year });
-      });
-
-      if (!list.length) { showToast("⚠️ No valid student numbers found in the CSV.", "rgba(180,130,0,.85)"); return; }
-
-      const { ok, data, error } = await api("/api/masterlist/import", { method: "POST", body: { rows: list, fileName: file.name } });
-      if (!ok) { showToast(`❌ ${error || "Could not import the masterlist."}`, "rgba(155,22,22,.85)"); return; }
-      await refreshMasterlistStatus();
-      showToast(`✅ Masterlist loaded — ${data.count} students imported.`);
-    } catch (err) {
-      showToast("❌ Could not read that CSV file.", "rgba(155,22,22,.85)");
-    }
-    input.value = "";
-  };
-  reader.onerror = () => showToast("❌ Failed to read the file.", "rgba(155,22,22,.85)");
-  reader.readAsText(file);
-}
-
-async function deleteMasterlist() {
-  if (!MASTERLIST_COUNT) {
-    showToast("⚠️ There is no imported masterlist to delete.", "rgba(180,130,0,.85)");
-    return;
-  }
-  const confirmed = window.confirm(
-    `Delete the current imported masterlist (${MASTERLIST_COUNT} student${MASTERLIST_COUNT === 1 ? "" : "s"})?\n\nRegistered user accounts will not be deleted.`
-  );
-  if (!confirmed) return;
-
-  const { ok, data, error } = await api("/api/masterlist", { method: "DELETE" });
-  if (!ok) {
-    showToast(`❌ ${error || "Could not delete the masterlist."}`, "rgba(155,22,22,.85)");
-    return;
-  }
-  await refreshMasterlistStatus();
-  showToast(`✅ Masterlist deleted — ${data.count} imported student${data.count === 1 ? "" : "s"} removed.`);
-}
 function showToast(msg, bg) { const t = document.createElement("div"); t.className = "toast"; t.style.background = bg || "rgba(139,26,26,.85)"; t.style.pointerEvents = "auto"; t.innerHTML = msg; document.getElementById("toastContainer").appendChild(t); setTimeout(() => { t.style.transition = ".3s"; t.style.opacity = "0"; t.style.transform = "translateY(8px)"; setTimeout(() => t.remove(), 300); }, 3200); }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1141,6 +1098,9 @@ const STUDENT_SERVICES = [
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Downloadable Forms", d: "Official OSS forms" },
 ];
 const ADMIN_SERVICES = [
+  { action: "manageMasterlist", icon: "fa-users-rectangle", t: "Masterlist Manager", d: "Add, edit, or remove masterlist entries" },
+  { action: "manageMasterlistGroups", icon: "fa-layer-group", t: "Masterlist Groups", d: "Organize by school year, course, and year level" },
+  { action: "manageStudentAccounts", icon: "fa-user-lock", t: "Student Accounts", d: "Place accounts on hold or reactivate them" },
   { page: "page-referral", icon: "fa-hand-holding-heart", t: "Referrals", d: "Review & manage interventions" },
   { page: "page-idapp", icon: "fa-id-card", t: "ID Applications", d: "Verify ORs & update statuses" },
   { page: "page-helpdesk", icon: "fa-headset", t: "Help Desk", d: "Respond to student tickets" },
@@ -1215,13 +1175,6 @@ async function requestProfileEdit() {
   if (current.data.pending) return showToast("⚠️ Your profile update is already awaiting staff verification.", "rgba(180,130,0,.85)");
   const u = current.data.user || session;
   openAppModal({ title: "Update Profile", subtitle: "Your changes will be reviewed by Student Services before they are applied.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Full name", "profileName", u.name)}${modalField("Email", "profileEmail", u.email)}${modalField("Course", "profileCourse", u.course || "")}${modalField("Year level", "profileYear", u.year || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="saveProfileEdit()"><i class="fa-solid fa-paper-plane"></i> Submit for review</button></div>` });
-  return;
-  const name = prompt("Full name:", u.name); if (name === null) return;
-  const email = prompt("Email:", u.email); if (email === null) return;
-  const course = prompt("Course:", u.course || ""); if (course === null) return;
-  const year = prompt("Year level:", u.year || ""); if (year === null) return;
-  const result = await api("/api/profile", { method: "POST", body: { name, email, course, year } });
-  showToast(result.ok ? "✅ Profile update submitted for staff verification." : `❌ ${result.error || "Could not submit profile update."}`, result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
 async function saveProfileEdit() {
@@ -2441,6 +2394,172 @@ async function saveStaffAccount(id) {
   showToast(result.error || "Could not save staff account.", "rgba(155,22,22,.85)");
 }
 
+function scopeArgOf(scope) { return scope ? `{schoolYear:'${esc(scope.schoolYear)}',course:'${esc(scope.course)}',year:'${esc(scope.year)}'}` : "null"; }
+
+async function manageMasterlist(query = "", scope = null) {
+  const result = await api("/api/masterlist?full=1");
+  if (!result.ok) return showToast("Could not load the masterlist.", "rgba(155,22,22,.85)");
+  window.__qrsMasterlist = result.data;
+  renderMasterlistShell(query, scope);
+}
+function renderMasterlistShell(query, scope) {
+  const all = window.__qrsMasterlist || [];
+  const scopeArg = scopeArgOf(scope);
+  const scoped = scope ? all.filter((e) => e.schoolYear === scope.schoolYear && e.course === scope.course && e.year === scope.year) : all;
+  const toolbar = scope
+    ? `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn-soft" onclick="manageMasterlistGroups()"><i class="fa-solid fa-arrow-left"></i> Back to Groups</button><label class="btn-soft" style="cursor:pointer;"><i class="fa-solid fa-file-import"></i> Import CSV for this group<input type="file" accept=".csv" style="display:none;" onchange="handleGroupCSV(this,'${esc(scope.schoolYear)}','${esc(scope.course)}','${esc(scope.year)}')"></label></div>`
+    : "";
+  openAppModal({
+    title: scope ? `Masterlist — ${scope.schoolYear} · ${scope.course} · ${scope.year}` : "Masterlist Manager",
+    subtitle: scope ? `${scoped.length} student${scoped.length === 1 ? "" : "s"} in this group.` : `${all.length} student${all.length === 1 ? "" : "s"} in the masterlist. Add, edit, or remove individual entries.`,
+    icon: "fa-users-rectangle",
+    wide: true,
+    content: `${toolbar}<input class="glass-input" placeholder="Search student no., name, or course…" value="${esc(query)}" oninput="filterMasterlistList(this.value, ${scopeArg})" style="margin-bottom:12px;"><div id="mlResultsList" class="app-list" style="max-height:340px;overflow-y:auto;"></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button><button class="btn-maroon" onclick="openMasterlistEditor(null, ${scopeArg})"><i class="fa-solid fa-user-plus"></i> Add entry</button></div>`,
+  });
+  renderMasterlistResults(query, scope);
+}
+function renderMasterlistResults(query, scope) {
+  const container = document.getElementById("mlResultsList");
+  if (!container) return;
+  const all = window.__qrsMasterlist || [];
+  const q = (query || "").toLowerCase();
+  let list = scope ? all.filter((e) => e.schoolYear === scope.schoolYear && e.course === scope.course && e.year === scope.year) : all;
+  list = list.filter((e) => !q || e.sn.toLowerCase().includes(q) || (e.name || "").toLowerCase().includes(q) || (e.course || "").toLowerCase().includes(q));
+  const scopeArg = scopeArgOf(scope);
+  container.innerHTML = list.length ? list.map((e) => `<div class="app-row"><div><div class="app-row-title">${esc(e.sn)} — ${esc(e.name || "—")}</div><div class="app-row-meta">${esc(e.email || "no email")} · ${esc(e.course || "—")} ${esc(e.year || "")}${e.schoolYear ? ` · ${esc(e.schoolYear)}` : ""}</div></div><div style="display:flex;gap:6px;"><button class="btn-soft" onclick="openMasterlistEditor('${esc(e.sn)}', ${scopeArg})">Edit</button><button class="btn-soft" style="color:#b91c1c;" onclick="removeMasterlistEntry('${esc(e.sn)}', ${scopeArg})">Remove</button></div></div>`).join("") : `<div class="app-row"><span class="app-row-meta">No matching entries.</span></div>`;
+}
+function filterMasterlistList(query, scope) {
+  renderMasterlistResults(query, scope);
+}
+function openMasterlistEditor(sn, scope = null) {
+  const e = sn ? (window.__qrsMasterlist || []).find((x) => x.sn === sn) : null;
+  const scopeArg = scopeArgOf(scope);
+  openAppModal({ title: e ? "Edit Masterlist Entry" : "Add Masterlist Entry", subtitle: e ? "Update this student's masterlist record." : scope ? `Add a student to ${scope.schoolYear} · ${scope.course} · ${scope.year}.` : "Add a single student to the masterlist.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Student number", "mlSn", e?.sn || "", "full")}${modalField("Full name", "mlName", e?.name || "")}${modalField("Email", "mlEmail", e?.email || "")}${modalField("Course", "mlCourse", e?.course || scope?.course || "")}${modalField("Year level", "mlYear", e?.year || scope?.year || "")}${modalField("School year", "mlSchoolYear", e?.schoolYear || scope?.schoolYear || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="${scope ? `manageMasterlist('', ${scopeArg})` : "manageMasterlist()"}">Back</button><button class="btn-maroon" onclick="saveMasterlistEntry('${e?.sn || ""}', ${scopeArg})">${e ? "Save changes" : "Add entry"}</button></div>` });
+  const snField = document.getElementById("mlSn");
+  if (snField && e) snField.disabled = true;
+  if (scope && !e) { const courseField = document.getElementById("mlCourse"), yearField = document.getElementById("mlYear"), syField = document.getElementById("mlSchoolYear"); if (courseField) courseField.disabled = true; if (yearField) yearField.disabled = true; if (syField) syField.disabled = true; }
+}
+async function saveMasterlistEntry(originalSn, scope = null) {
+  const sn = document.getElementById("mlSn")?.value.trim();
+  const name = document.getElementById("mlName")?.value.trim();
+  const email = document.getElementById("mlEmail")?.value.trim();
+  const course = document.getElementById("mlCourse")?.value.trim();
+  const year = document.getElementById("mlYear")?.value.trim();
+  const schoolYear = document.getElementById("mlSchoolYear")?.value.trim();
+  const result = originalSn
+    ? await api(`/api/masterlist/${encodeURIComponent(originalSn)}`, { method: "PATCH", body: { name, email, course, year, schoolYear } })
+    : await api("/api/masterlist", { method: "POST", body: { sn, name, email, course, year, schoolYear } });
+  if (result.ok) { await refreshMasterlistStatus(); showToast(originalSn ? "Masterlist entry updated." : "Masterlist entry added."); return manageMasterlist("", scope); }
+  showToast(result.error || "Could not save masterlist entry.", "rgba(155,22,22,.85)");
+}
+function removeMasterlistEntry(sn, scope = null) {
+  const scopeArg = scopeArgOf(scope);
+  openAppModal({ title: "Remove Masterlist Entry", subtitle: `Remove ${sn} from the masterlist? This does not delete any registered account.`, icon: "fa-user-xmark", content: `<div class="app-modal-actions"><button class="btn-soft" onclick="manageMasterlist('', ${scopeArg})">Cancel</button><button class="btn-maroon" onclick="confirmRemoveMasterlistEntry('${esc(sn)}', ${scopeArg})">Remove</button></div>` });
+}
+async function confirmRemoveMasterlistEntry(sn, scope = null) {
+  const result = await api(`/api/masterlist/${encodeURIComponent(sn)}`, { method: "DELETE" });
+  if (result.ok) { await refreshMasterlistStatus(); showToast("Masterlist entry removed."); return manageMasterlist("", scope); }
+  showToast(result.error || "Could not remove masterlist entry.", "rgba(155,22,22,.85)");
+}
+function handleGroupCSV(input, schoolYear, course, year) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const rows = parseCSV(e.target.result);
+      if (!rows.length) { showToast("The CSV file is empty.", "rgba(180,130,0,.85)"); return; }
+      const norm = (s) => (s || "").toLowerCase().replace(/[\s_-]/g, "");
+      const SN = ["studentnumber", "studentno", "studentid", "studno", "studnum", "srcode", "idnumber", "id", "number"];
+      const NM = ["name", "fullname", "studentname", "completename"];
+      const EM = ["email", "emailaddress", "pupemail", "mail"];
+      const header = rows[0].map(norm);
+      const has = (arr) => header.some((h) => arr.includes(h));
+      const idxOf = (arr) => header.findIndex((h) => arr.includes(h));
+      const hasHeader = has(SN) || has(NM) || has(EM);
+      let iSN, iNM, iEM, dataRows;
+      if (hasHeader) { iSN = idxOf(SN); iNM = idxOf(NM); iEM = idxOf(EM); if (iSN === -1) iSN = 0; dataRows = rows.slice(1); }
+      else { iSN = 0; iNM = 1; iEM = 2; dataRows = rows; }
+      const list = [];
+      const seen = new Set();
+      dataRows.forEach((r) => {
+        const sn = (r[iSN] || "").toString().trim().toUpperCase();
+        if (!sn || seen.has(sn)) return;
+        seen.add(sn);
+        list.push({ sn, name: iNM > -1 ? (r[iNM] || "").trim() : "", email: iEM > -1 ? (r[iEM] || "").trim() : "" });
+      });
+      if (!list.length) { showToast("No valid student numbers found in the CSV.", "rgba(180,130,0,.85)"); return; }
+      const result = await api("/api/masterlist/import", { method: "POST", body: { rows: list, fileName: file.name, scope: { schoolYear, course, year } } });
+      if (!result.ok) { showToast(result.error || "Could not import the masterlist.", "rgba(155,22,22,.85)"); return; }
+      await refreshMasterlistStatus();
+      showToast(`Imported ${result.data.count} students into ${schoolYear} · ${course} · ${year}.`);
+      manageMasterlist("", { schoolYear, course, year });
+    } catch (err) {
+      showToast("Could not read that CSV file.", "rgba(155,22,22,.85)");
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function manageMasterlistGroups() {
+  const result = await api("/api/masterlist/groups");
+  if (!result.ok) return showToast("Could not load masterlist groups.", "rgba(155,22,22,.85)");
+  window.__qrsGroups = result.data;
+  const superAdmin = isSuperAdmin();
+  openAppModal({ title: "Masterlist Groups", subtitle: "Organized by school year, course, and year level, each with an optional owner.", icon: "fa-layer-group", wide: true, content: `<div class="app-list" style="max-height:400px;overflow-y:auto;">${result.data.length ? result.data.map((g) => `<div class="app-row"><div><div class="app-row-title">${esc(g.schoolYear)} · ${esc(g.course)} · ${esc(g.year)}</div><div class="app-row-meta">${g.count} student${g.count === 1 ? "" : "s"} · Owner: ${g.owner ? esc(g.owner.name) : "Unassigned"}</div></div><div style="display:flex;gap:6px;"><button class="btn-soft" onclick="manageMasterlist('', {schoolYear:'${esc(g.schoolYear)}',course:'${esc(g.course)}',year:'${esc(g.year)}'})">View students</button>${superAdmin ? `<button class="btn-soft" onclick="openGroupOwnerEditor('${esc(g.id || "")}','${esc(g.schoolYear)}','${esc(g.course)}','${esc(g.year)}','${esc(g.owner?.id || "")}')">Assign owner</button>` : ""}</div></div>`).join("") : `<div class="app-row"><span class="app-row-meta">No groups yet.</span></div>`}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button><button class="btn-maroon" onclick="addMasterlistGroupPrompt()"><i class="fa-solid fa-plus"></i> Add group</button></div>` });
+}
+function addMasterlistGroupPrompt() {
+  openAppModal({ title: "Add Masterlist Group", subtitle: "Register a school year, course, and year level — useful for assigning an owner before any students are imported.", icon: "fa-layer-group", content: `<div class="app-modal-grid">${modalField("School year", "grpSchoolYear", "", "full")}${modalField("Course", "grpCourse", "")}${modalField("Year level", "grpYear", "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="manageMasterlistGroups()">Back</button><button class="btn-maroon" onclick="saveMasterlistGroup()">Add group</button></div>` });
+}
+async function saveMasterlistGroup() {
+  const schoolYear = document.getElementById("grpSchoolYear")?.value.trim();
+  const course = document.getElementById("grpCourse")?.value.trim();
+  const year = document.getElementById("grpYear")?.value.trim();
+  const result = await api("/api/masterlist/groups", { method: "POST", body: { schoolYear, course, year } });
+  if (result.ok) { showToast("Masterlist group added."); return manageMasterlistGroups(); }
+  showToast(result.error || "Could not add that group.", "rgba(155,22,22,.85)");
+}
+async function openGroupOwnerEditor(id, schoolYear, course, year, currentOwnerId) {
+  const staff = await api("/api/users/staff");
+  const eligible = staff.ok ? staff.data.filter((u) => u.role === "ADMIN" || u.role === "SUPER_ADMIN") : [];
+  let groupId = id;
+  if (!groupId) {
+    const created = await api("/api/masterlist/groups", { method: "POST", body: { schoolYear, course, year } });
+    if (!created.ok) return showToast(created.error || "Could not register that group.", "rgba(155,22,22,.85)");
+    groupId = created.data.id;
+  }
+  openAppModal({ title: "Assign Group Owner", subtitle: `${schoolYear} · ${course} · ${year}`, icon: "fa-user-shield", content: `<div class="app-modal-grid"><div class="app-field full"><label for="grpOwner">Owner</label><select id="grpOwner" class="glass-input"><option value="">Unassigned</option>${eligible.map((u) => `<option value="${esc(u.id)}" ${u.id === currentOwnerId ? "selected" : ""}>${esc(u.name)} (${u.role === "SUPER_ADMIN" ? "Super Admin" : "Admin"})</option>`).join("")}</select></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="manageMasterlistGroups()">Back</button><button class="btn-maroon" onclick="saveGroupOwner('${esc(groupId)}')">Save</button></div>` });
+}
+async function saveGroupOwner(groupId) {
+  const ownerId = document.getElementById("grpOwner")?.value || null;
+  const result = await api(`/api/masterlist/groups/${encodeURIComponent(groupId)}`, { method: "PATCH", body: { ownerId } });
+  if (result.ok) { showToast("Group owner updated."); return manageMasterlistGroups(); }
+  showToast(result.error || "Could not update the group owner.", "rgba(155,22,22,.85)");
+}
+
+async function manageStudentAccounts(query = "") {
+  const result = await api("/api/users/students");
+  if (!result.ok) return showToast("Could not load student accounts.", "rgba(155,22,22,.85)");
+  window.__qrsStudents = result.data;
+  openAppModal({ title: "Student Accounts", subtitle: `${result.data.length} registered student${result.data.length === 1 ? "" : "s"}. Place accounts on hold or reactivate them.`, icon: "fa-user-lock", wide: true, content: `<input class="glass-input" placeholder="Search student no., name, or email…" value="${esc(query)}" oninput="filterStudentAccountsList(this.value)" style="margin-bottom:12px;"><div id="saResultsList" class="app-list" style="max-height:400px;overflow-y:auto;"></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button></div>` });
+  renderStudentAccountsResults(query);
+}
+function renderStudentAccountsResults(query) {
+  const container = document.getElementById("saResultsList");
+  if (!container) return;
+  const q = (query || "").toLowerCase();
+  const list = (window.__qrsStudents || []).filter((u) => !q || (u.studentId || "").toLowerCase().includes(q) || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  container.innerHTML = list.length ? list.map((u) => `<div class="app-row"><div><div class="app-row-title">${esc(u.name)} <span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;${u.active ? "background:rgba(22,163,74,.12);color:#15803d;" : "background:rgba(220,38,38,.10);color:#b91c1c;"}">${u.active ? "Active" : "On Hold"}</span></div><div class="app-row-meta">${esc(u.studentId || "")} · ${esc(u.email)}${u.course ? ` · ${esc(u.course)} ${esc(u.year || "")}` : ""}</div></div><button class="btn-soft" style="${u.active ? "color:#b91c1c;" : "color:#15803d;"}" onclick="toggleStudentHold('${esc(u.studentId)}', ${!u.active})">${u.active ? "Put on hold" : "Reactivate"}</button></div>`).join("") : `<div class="app-row"><span class="app-row-meta">No matching student accounts.</span></div>`;
+}
+function filterStudentAccountsList(query) {
+  renderStudentAccountsResults(query);
+}
+async function toggleStudentHold(sn, active) {
+  const result = await api(`/api/users/students/${encodeURIComponent(sn)}`, { method: "PATCH", body: { active } });
+  if (result.ok) { showToast(active ? "Account reactivated." : "Account put on hold."); return manageStudentAccounts(); }
+  showToast(result.error || "Could not update the account.", "rgba(155,22,22,.85)");
+}
+
 async function giveFeedback(requestId) {
   openAppModal({ title: "Service Feedback", subtitle: "Your feedback helps Student Services improve completed services.", icon: "fa-star", content: `<div class="app-modal-grid"><div class="app-field"><label for="feedbackRating">Rating</label><select id="feedbackRating" class="glass-input"><option value="5">5 — Excellent</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Needs improvement</option><option value="1">1 — Poor</option></select></div><div class="app-field full"><label for="feedbackComment">Optional comment</label><textarea id="feedbackComment" class="glass-input" placeholder="Tell us about your experience..."></textarea></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-gold" onclick="submitFeedback('${esc(requestId)}')"><i class="fa-solid fa-star"></i> Submit feedback</button></div>` });
 }
@@ -2492,15 +2611,6 @@ async function confirmSendReminders() {
   showToast(result.ok ? `Sent ${result.data.appointmentEmails} appointment and ${result.data.readyEmails} document reminders.` : (result.error || "Could not send reminders."), result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
-async function deleteMasterlist() {
-  if (!MASTERLIST_COUNT) return showToast("There is no imported masterlist to delete.", "rgba(180,130,0,.85)");
-  openAppModal({ title: "Delete CSV Masterlist", subtitle: "This removes imported CSV records only. Registered student accounts will remain active.", icon: "fa-trash-can", content: `<div class="app-row"><div><div class="app-row-title">${MASTERLIST_COUNT} imported student${MASTERLIST_COUNT === 1 ? "" : "s"}</div><div class="app-row-meta">This action cannot be undone without a backup.</div></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Keep masterlist</button><button class="btn-maroon" onclick="confirmDeleteMasterlist()">Delete masterlist</button></div>` });
-}
-async function confirmDeleteMasterlist() {
-  const { ok, data, error } = await api("/api/masterlist", { method: "DELETE" });
-  if (ok) { closeAppModal(); await refreshMasterlistStatus(); }
-  showToast(ok ? `Masterlist deleted — ${data.count} imported student${data.count === 1 ? "" : "s"} removed.` : (error || "Could not delete the masterlist."), ok ? undefined : "rgba(155,22,22,.85)");
-}
 
 async function reviewProfileChanges() {
   const result = await api("/api/profile");

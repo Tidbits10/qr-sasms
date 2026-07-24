@@ -15,12 +15,21 @@
           <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#F5C518;">PUP San Pedro · Student Services Office</div>
         </div>
       </div>
-      <div id="desktopNavLinks"></div>
-      <button class="hamburger-btn btn-ghost" onclick="toggleMobileMenu()" style="padding:8px 12px;align-items:center;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.2);color:rgba(255,220,220,.9);" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="desktopNavLinks"></div>
+        <button class="hamburger-btn btn-ghost" onclick="toggleMobileMenu()" style="padding:8px 12px;align-items:center;background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.2);color:rgba(255,220,220,.9);" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+      </div>
     </div>
-    <div id="mobileMenu"><div id="mobileMenuLinks" style="display:flex;flex-direction:column;gap:4px;padding-bottom:12px;"></div></div>
   </div>
 </nav>
+<div id="mobileMenuBackdrop" onclick="closeMobileMenu()"></div>
+<div id="mobileMenu">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:900;letter-spacing:.08em;color:#F5C518;text-transform:uppercase;">Menu</div>
+    <button class="app-modal-close" onclick="closeMobileMenu()" aria-label="Close menu" style="background:rgba(255,255,255,.12);color:#fff;"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div id="mobileMenuLinks" style="display:flex;flex-direction:column;gap:4px;"></div>
+</div>
 <!-- v3.2: Notification bell dropdown panel -->
 <div id="bellPanel" style="display:none;position:fixed;top:64px;right:16px;width:340px;max-width:92vw;z-index:120;background:rgba(255,251,240,.97);border:1px solid rgba(139,26,26,.2);border-radius:14px;box-shadow:0 18px 50px rgba(60,8,8,.25);overflow:hidden;backdrop-filter:blur(14px);"></div>
 
@@ -149,7 +158,7 @@
         <div class="page-title">My Dashboard</div>
         <div class="page-sub">Welcome back, <span style="color:#F5C518;font-weight:700;" id="studentWelcomeName">Juan dela Cruz</span></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;"><button onclick="requestProfileEdit()" class="btn-ghost"><i class="fa-solid fa-user-pen" style="margin-right:6px;"></i>Edit Profile</button><button onclick="goTo('page-request')" class="btn-gold"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Request</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;"><button onclick="goTo('page-request')" class="btn-gold"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Request</button></div>
     </div>
     <!-- KPI - driven from DB -->
     <div class="grid-4" style="margin-bottom:20px;" id="studentKPI">
@@ -199,7 +208,6 @@
             <button onclick="goTo('page-idapp')" class="quick-link"><i class="fa-solid fa-id-card" style="color:#C8890F;width:16px;text-align:center;"></i>ID Application<i class="fa-solid fa-chevron-right" style="margin-left:auto;opacity:.3;font-size:11px;"></i></button>
             <button onclick="goTo('page-helpdesk')" class="quick-link"><i class="fa-solid fa-robot" style="color:#C8890F;width:16px;text-align:center;"></i>Student Service Help<i class="fa-solid fa-chevron-right" style="margin-left:auto;opacity:.3;font-size:11px;"></i></button>
             <button onclick="quickRequest('auth')" class="quick-link"><i class="fa-solid fa-stamp" style="color:#C8890F;width:16px;text-align:center;"></i>Authentication<i class="fa-solid fa-chevron-right" style="margin-left:auto;opacity:.3;font-size:11px;"></i></button>
-            <button onclick="quickRequest('diploma')" class="quick-link"><i class="fa-solid fa-graduation-cap" style="color:#C8890F;width:16px;text-align:center;"></i>Diploma Copy<i class="fa-solid fa-chevron-right" style="margin-left:auto;opacity:.3;font-size:11px;"></i></button>
           </div>
         </div>
       </div>
@@ -249,7 +257,6 @@
             <option value="gmc">Good Moral Certificate</option>
             <option value="ev">Enrollment Verification</option>
             <option value="auth">Authentication</option>
-            <option value="diploma">Diploma Copy</option>
             <option value="other">Other</option>
           </select>
           <div id="reqDocTypeErr" class="field-error"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>Please select a document type</div>
@@ -339,9 +346,6 @@
         <div class="page-sub">SSO Staff · <span style="font-weight:700;color:rgba(20,4,4,.85);">Monday, June 22, 2026</span></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <label class="btn-gold" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;font-size:13px;border-radius:14px;"><i class="fa-solid fa-file-import"></i>Import CSV<input type="file" accept=".csv" style="display:none;" onchange="handleCSV(this)"/></label>
-        <button onclick="deleteMasterlist()" class="btn-maroon" style="padding:10px 18px;font-size:13px;background:linear-gradient(135deg,#991b1b,#dc2626);"><i class="fa-solid fa-trash" style="margin-right:6px;"></i>Delete CSV</button>
-        <span id="masterlistStatus" style="font-size:12px;font-weight:700;color:rgba(30,5,5,.7);"></span>
         <button onclick="goTo('page-scanner')" class="btn-maroon" style="padding:10px 18px;font-size:13px;"><i class="fa-solid fa-qrcode" style="margin-right:6px;"></i>Open Scanner</button>
       </div>
     </div>
