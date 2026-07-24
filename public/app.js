@@ -261,6 +261,7 @@ async function goTo(pageId) {
 
   const noNav = ["page-login", "page-register"];
   document.getElementById("mainNav").style.display = noNav.includes(pageId) ? "none" : "block";
+  if (noNav.includes(pageId)) closeMobileMenu();
 
   // Preload whatever data this page needs, then render (mirrors the
   // original's synchronous render-from-cache functions below).
