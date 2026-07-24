@@ -7,3 +7,4 @@ node_modules
 !/public/uploads/.gitkeep
 npm-debug.log*
 .DS_Store
+tsconfig.tsbuildinfo

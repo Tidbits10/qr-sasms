@@ -20,21 +20,19 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^17.4.2",
     "jose": "^5.9.6",
-    "next": "14.2.15",
-    "nodemailer": "^6.10.1",
+    "next": "^14.2.35",
+    "nodemailer": "^9.0.3",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "uuid": "^10.0.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.10",
-    "@types/nodemailer": "^6.4.24",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
-    "@types/uuid": "^10.0.0",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.15",
+    "eslint-config-next": "^14.2.35",
     "prisma": "^5.20.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
