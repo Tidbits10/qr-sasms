@@ -73,6 +73,8 @@ let EMAIL_CONFIGURED = false;
 let NOTIFS = [];          // caller's own notifications
 let knownNotificationIds = new Set();
 let notificationPollingStarted = false;
+let adminDashboardPollingStarted = false;
+let adminDashboardSnapshot = "";
 let PENDING_ACCOUNTS = []; // accounts awaiting admin approval
 let MASTERLIST_COUNT = 0;
 let MOD = { referrals: [], idapps: [], bulletins: [], tickets: [], faqs: [], events2: [], complaints: [], forms: [], memos: [] };
@@ -297,6 +299,7 @@ async function updateNav(pageId) {
   await loadNotifs();
   if (!knownNotificationIds.size) knownNotificationIds = new Set(NOTIFS.map((n) => n.id));
   startNotificationPolling();
+  startAdminDashboardPolling();
   const role = session.role === "super_admin" ? "admin" : session.role;
   const links = {
     student: [{ label: "Dashboard", icon: "fa-house", page: "page-student" }, { label: "New Request", icon: "fa-plus", page: "page-request" }, { label: "Appointments", icon: "fa-calendar", page: "page-appointment" }, { label: "Services", icon: "fa-table-cells-large", page: "page-services" }],
@@ -2166,10 +2169,48 @@ function startNotificationPolling() {
     if (!session) return;
     await loadNotifs();
     const newItems = NOTIFS.filter((n) => !knownNotificationIds.has(n.id));
-    if (newItems.length) playNotificationSound();
+    if (newItems.length) {
+      playNotificationSound();
+      showIncomingNotifications(newItems);
+    }
     NOTIFS.forEach((n) => knownNotificationIds.add(n.id));
     updateBellBadge();
-  }, 15000);
+  }, 10000);
+}
+
+function showIncomingNotifications(items) {
+  const newest = items[items.length - 1];
+  if (!newest) return;
+  showToast(`New notification: ${newest.title}`, "rgba(21, 80, 110, .92)");
+  const panel = document.getElementById("bellPanel");
+  if (!panel) return;
+  renderBellPanel();
+  panel.style.display = "block";
+  window.setTimeout(() => {
+    if (panel.style.display === "block") panel.style.display = "none";
+  }, 9000);
+}
+
+function startAdminDashboardPolling() {
+  if (adminDashboardPollingStarted || !isAdmin()) return;
+  adminDashboardPollingStarted = true;
+  adminDashboardSnapshot = JSON.stringify({
+    requests: DB.map((r) => `${r.id}:${r.status}`),
+    appointments: queueData.map((q) => `${q.q}:${q.served}`),
+  });
+  window.setInterval(async () => {
+    if (!session || !isAdmin() || document.querySelector(".page.active")?.id !== "page-admin") return;
+    await Promise.all([loadRequests(), loadQueueData(), loadAdminActivity(), loadPendingAccounts()]);
+    const nextSnapshot = JSON.stringify({
+      requests: DB.map((r) => `${r.id}:${r.status}`),
+      appointments: queueData.map((q) => `${q.q}:${q.served}`),
+    });
+    if (nextSnapshot === adminDashboardSnapshot) return;
+    adminDashboardSnapshot = nextSnapshot;
+    if (donutChart) { try { donutChart.destroy(); } catch {} donutChart = null; }
+    if (barChartInst) { try { barChartInst.destroy(); } catch {} barChartInst = null; }
+    renderAdminPage();
+  }, 10000);
 }
 function notificationDestination(notification) {
   const text = `${notification.title} ${notification.body}`.toLowerCase();
@@ -2196,6 +2237,12 @@ async function toggleBell() {
   if (!p) return;
   if (p.style.display === "block") { p.style.display = "none"; return; }
   await loadNotifs();
+  renderBellPanel();
+  p.style.display = "block";
+}
+function renderBellPanel() {
+  const p = document.getElementById("bellPanel");
+  if (!p) return;
   const mine = [...myNotifs()].reverse();
   p.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(139,26,26,.12);">
@@ -2211,7 +2258,6 @@ async function toggleBell() {
         </button>`).join("")
       : '<div style="padding:22px;text-align:center;font-size:12px;color:rgba(30,5,5,.5);">No notifications yet.</div>'}
     </div>`;
-  p.style.display = "block";
   // Notifications that are not acted on stay unread but soften after 7 seconds.
   window.setTimeout(() => p.querySelectorAll("button[data-notification-id]").forEach((item) => {
     if (!NOTIFS.find((n) => n.id === item.dataset.notificationId)?.read) item.style.opacity = ".62";
