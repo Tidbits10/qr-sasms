@@ -84,10 +84,10 @@ async function main() {
     status: string;
     daysAgo: number;
   }> = [
-    { id: "REQ-042", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Good Moral Certificate", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Ready to Claim", daysAgo: 2 },
+    { id: "REQ-042", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Excuse Slip", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Ready to Claim", daysAgo: 2 },
     { id: "REQ-040", studentId: "2024-00091-SP-0", studentName: "Maria Santos", doc: "Enrollment Verification", docKey: "ev", purpose: "Scholarship Application", copies: 1, notes: "", status: "Approved", daysAgo: 3 },
     { id: "REQ-041", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Enrollment Verification", docKey: "ev", purpose: "Government Transaction", copies: 1, notes: "", status: "Approved", daysAgo: 5 },
-    { id: "REQ-038", studentId: "2024-00102-SP-0", studentName: "Pedro Reyes", doc: "Good Moral Certificate", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 6 },
+    { id: "REQ-038", studentId: "2024-00102-SP-0", studentName: "Pedro Reyes", doc: "Excuse Slip", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 6 },
     { id: "REQ-036", studentId: "2024-00115-SP-0", studentName: "Ana Flores", doc: "Enrollment Verification", docKey: "ev", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 7 },
     { id: "REQ-039", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Enrollment Verification", docKey: "ev", purpose: "Further Studies / Graduate School", copies: 2, notes: "Needed for graduate school application", status: "Pending", daysAgo: 8 },
     { id: "REQ-033", studentId: "2024-00134-SP-0", studentName: "Liza Manguba", doc: "Diploma Copy", docKey: "diploma", purpose: "Employment", copies: 1, notes: "", status: "Rejected", daysAgo: 10 },
@@ -157,7 +157,7 @@ async function main() {
   if (faqCount === 0) {
     await prisma.faq.createMany({
       data: [
-        { id: "FAQ-SEED1", cat: "Document Requests", q: "How long does a document request take to process?", a: "Most documents (Good Moral, COE) take 3–5 working days. TOR may take up to 10 working days depending on records." },
+        { id: "FAQ-SEED1", cat: "Document Requests", q: "How long does a document request take to process?", a: "Most documents (Excuse Slip, COE) take 3–5 working days. TOR may take up to 10 working days depending on records." },
         { id: "FAQ-SEED2", cat: "Document Requests", q: "How will I know my document is ready?", a: 'You will receive an email notification and your request status in the portal will change to "Ready to Claim."' },
         { id: "FAQ-SEED3", cat: "Student ID", q: "What do I need to bring when claiming my ID?", a: "Bring one valid ID and your QR code/reference number from this portal." },
         { id: "FAQ-SEED4", cat: "Student ID", q: "How much is an ID replacement?", a: "Pay the replacement fee at the cashier first, then upload your Official Receipt (OR) in the ID Application module." },

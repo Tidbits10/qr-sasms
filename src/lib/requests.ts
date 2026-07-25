@@ -4,7 +4,7 @@ import { shortDate, dateSort } from "./format";
 
 // Matches the original client-side DOC_LABELS mapping exactly.
 export const DOC_LABELS: Record<string, string> = {
-  gmc: "Good Moral Certificate",
+  gmc: "Excuse Slip",
   coe: "Certificate of Enrollment",
   tor: "Transcript of Records (TOR)",
   auth: "Authentication",

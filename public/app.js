@@ -104,8 +104,8 @@ function updateMasterlistStatus() {
     : `<i class="fa-solid fa-triangle-exclamation" style="color:#d97706;margin-right:4px;"></i>No masterlist loaded`;
 }
 
-const DOC_LABELS = { gmc: "Good Moral Certificate", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", diploma: "Diploma Copy", other: "Other", ev: "Enrollment Verification" };
-const DOC_HELPS = { gmc: "📄 Good Moral Certificate — Certifies your conduct as a student. Required for employment, further studies, or government transactions.", ev: "✅ Enrollment Verification — Certifies that you are officially enrolled this term, issued by the SSO for scholarships, allowances, and external requirements.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
+const DOC_LABELS = { gmc: "Excuse Slip", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", diploma: "Diploma Copy", other: "Other", ev: "Enrollment Verification" };
+const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", ev: "✅ Enrollment Verification — Certifies that you are officially enrolled this term, issued by the SSO for scholarships, allowances, and external requirements.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
 const DOC_REQUIREMENTS = {
   gmc: ["Valid PUP student ID", "Clear purpose for the request"],
   ev: ["Valid PUP student ID", "Current enrollment details"],
@@ -1912,7 +1912,7 @@ function renderForms() {
         <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-upload" style="color:#8B1A1A;margin-right:6px;"></i>Upload a Form</div>
         <div style="display:grid;gap:8px;">
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;">
-            <input id="frmTitle" class="glass-input" placeholder="Form title (e.g., Good Moral Request Form)">
+            <input id="frmTitle" class="glass-input" placeholder="Form title (e.g., Excuse Slip Request Form)">
             <input id="frmCat" class="glass-input" placeholder="Category (e.g., Documents)">
           </div>
           <input id="frmFile" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="glass-input" style="padding:9px;">
