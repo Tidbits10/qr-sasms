@@ -76,6 +76,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const updated = await prisma.documentRequest.update({ where: { id }, data });
 
+  // The status is already saved. Non-critical notification failures must not
+  // make the client treat this successful state transition as a failed action.
+  try {
   await addAudit("INFO", `${id} status changed from ${oldStatus} to ${newStatus} by ${auth.name}.`);
   if (newStatus === "Completed" && data.claimRef) {
     await addAudit("INFO", `${id} claimed — ${claimRef} issued to ${existing.studentName}.`);
@@ -101,6 +104,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (newStatus === "Completed" && updated.claimRef) bellBody += ` Claiming Ref: ${updated.claimRef}.`;
     if (newStatus === "Rejected" && updated.rejectReason) bellBody += ` Reason: ${updated.rejectReason}`;
     await addNotification(updated.studentId, `Request ${newStatus}`, bellBody);
+  }
+
+  } catch (sideEffectError) {
+    console.error(`Request ${id} updated, but a notification side effect failed:`, sideEffectError);
   }
 
   return NextResponse.json(serializeRequest(updated));

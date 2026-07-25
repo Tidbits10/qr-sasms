@@ -2635,6 +2635,11 @@ async function adminAction(reqId, newStatus, reason) {
     body: { status: newStatus, reason },
   });
   if (!ok) {
+    // A legacy deployment can save the status but fail while attempting an
+    // optional email/log. Refresh the table immediately in that case instead
+    // of requiring staff to reload the entire page.
+    await Promise.all([loadRequests(), loadAuditLog(), loadEmailLog(), loadAdminActivity()]);
+    renderAdminPage();
     showToast(error || "Could not update request.", "rgba(155,22,22,.85)");
     return false;
   }
