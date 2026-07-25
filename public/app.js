@@ -310,7 +310,7 @@ async function updateNav(pageId) {
   const iconMap = { student: "fa-user-graduate", admin: "fa-shield-halved", scanner: "fa-qrcode" };
   const items = links[role] || links.student;
   const ctrl = `<div style="display:flex;align-items:center;gap:6px;">
-    <button onclick="toggleBell()" class="nav-link" style="position:relative;padding:7px 11px;" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:99px;background:#dc2626;color:#fff;font-size:9px;font-weight:900;align-items:center;justify-content:center;padding:0 3px;line-height:15px;">0</span></button>
+    <button onclick="toggleBell()" class="nav-link" style="position:relative;padding:10px 20px;" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:99px;background:#dc2626;color:#fff;font-size:9px;font-weight:900;align-items:center;justify-content:center;padding:0 3px;line-height:15px;">0</span></button>
     <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,220,220,.22);border-radius:10px;padding:5px 10px;">
       <div style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.3);display:flex;align-items:center;justify-content:center;"><i class="fa-solid ${iconMap[role]}" style="font-size:10px;color:#F5C518;"></i></div>
       <span style="font-size:12px;font-weight:700;color:rgba(255,220,220,.95);">${session.name.split(" ")[0]}</span>
