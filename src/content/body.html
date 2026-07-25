@@ -12,7 +12,7 @@
         <div style="width:40px;height:100px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP San Pedro Seal" style="width:100px;height:100px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));"></div>
         <div>
           <div style="font-size:15px;font-weight:900;letter-spacing:.1em;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);">QR-SASMS</div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#F5C518;">PUP San Pedro Â· Student Services Office</div>
+          <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#F5C518;">PUP San Pedro &middot; Student Services Office</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -35,7 +35,7 @@
 
 <!--  PAGE: LOGIN  -->
  <div id="authLoadingOverlay" style="position:fixed;inset:0;background:#1a0505;z-index:99999;display:flex;align-items:center;justify-content:center;">
-  <div style="color:#F5C518;font-size:14px;font-weight:700;">Loadingâ€¦</div>
+  <div style="color:#F5C518;font-size:14px;font-weight:700;">Loading&hellip;</div>
 </div>
 <div id="page-login" class="page auth-page active" style="align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;">
   <!-- PUP seal watermark on login background -->
@@ -167,7 +167,7 @@
       <div class="stat-card ac-maroon"><div class="input-label" style="margin-bottom:0;">All Requests</div><div id="kpiTotal" style="font-size:42px;font-weight:900;color:#1a0505;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">Total submitted</div></div>
       <div class="stat-card ac-gold"><div class="input-label" style="margin-bottom:0;">Pending</div><div id="kpiPending" style="font-size:42px;font-weight:900;color:#F5C518;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">Awaiting processing</div></div>
       <div class="stat-card ac-green"><div class="input-label" style="margin-bottom:0;">Ready to Claim</div><div id="kpiReady" style="font-size:42px;font-weight:900;color:#166534;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">QR code available</div></div>
-      <div class="stat-card ac-blue"><div class="input-label" style="margin-bottom:0;">Next Appointment</div><div style="font-size:20px;font-weight:900;color:#1d4ed8;margin:6px 0 2px;line-height:1.2;">June 25</div><div style="font-size:11px;color:rgba(30,5,5,.75);">APT-007 Â· 9:30 AM</div></div>
+      <div class="stat-card ac-blue"><div class="input-label" style="margin-bottom:0;">Next Appointment</div><div style="font-size:20px;font-weight:900;color:#1d4ed8;margin:6px 0 2px;line-height:1.2;">June 25</div><div style="font-size:11px;color:rgba(30,5,5,.75);">APT-007 &middot; 9:30 AM</div></div>
     </div>
     <div class="layout-ms">
       <!-- Requests Table -->
@@ -180,7 +180,7 @@
             </select>
           <div style="position:relative;">
             <i class="fa-solid fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(30,5,5,.55);font-size:12px;"></i>
-            <input id="studentSearch" type="text" placeholder="Search by document or refâ€¦" class="glass-input" style="padding-left:34px;padding-top:7px;padding-bottom:7px;width:220px;font-size:12px;" oninput="renderStudentTable(this.value)"/>
+            <input id="studentSearch" type="text" placeholder="Search by document or ref&hellip;" class="glass-input" style="padding-left:34px;padding-top:7px;padding-bottom:7px;width:220px;font-size:12px;" oninput="renderStudentTable(this.value)"/>
           </div></div>
         </div>
         <div style="overflow-x:auto;">
@@ -218,7 +218,7 @@
   <!-- QR Modal -->
   <div id="qrModal" class="modal-overlay">
     <div class="modal-box" style="text-align:center;max-width:340px;">
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8B1A1A;margin-bottom:16px;">âœ… APPROVED â€” Scan to Verify</div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8B1A1A;margin-bottom:16px;">&#x2705; APPROVED &mdash; Scan to Verify</div>
       <div id="qrCanvas" style="display:flex;justify-content:center;margin-bottom:14px;border-radius:12px;overflow:hidden;"></div>
       <div id="qrDocName" style="font-size:13px;color:#1a0505;font-weight:600;"></div>
       <div id="qrRefNo" style="font-family:monospace;font-size:11px;color:rgba(30,5,5,.62);margin-top:4px;"></div>
@@ -245,7 +245,7 @@
       <button onclick="goTo('page-student')" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <div style="display:flex;align-items:center;gap:8px;margin-top:14px;margin-bottom:4px;">
         <div style="width:32px;height:32px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP Seal" style="width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 3px rgba(139,26,26,.25));"></div>
-        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro Â· Student Services Office</div>
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro &middot; Student Services Office</div>
       </div>
       <div class="page-title">Submit a Document Request</div>
       <div class="page-sub">Fill out the form below. Track your request status on the dashboard.</div>
@@ -255,7 +255,7 @@
         <div>
           <span class="input-label">Document Type <span style="color:#f87171;">*</span></span>
           <select id="reqDocType" onchange="updateDocHelp(this.value)" class="glass-input">
-            <option value="">â€” Select document type â€”</option>
+            <option value="">&mdash; Select document type &mdash;</option>
             <option value="gmc">Good Moral Certificate</option>
             <option value="ev">Enrollment Verification</option>
             <option value="auth">Authentication</option>
@@ -268,7 +268,7 @@
         <div>
           <span class="input-label">Purpose / Reason <span style="color:#f87171;">*</span></span>
           <select id="reqPurpose" class="glass-input">
-            <option value="">â€” Select purpose â€”</option>
+            <option value="">&mdash; Select purpose &mdash;</option>
             <option>Employment</option>
             <option>Further Studies / Graduate School</option>
             <option>Government Transaction</option>
@@ -281,13 +281,13 @@
         <div>
           <span class="input-label">Number of Copies</span>
           <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
-            <button onclick="changeCopies(-1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">âˆ’</button>
+            <button onclick="changeCopies(-1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">&minus;</button>
             <span id="copiesVal" style="font-size:28px;font-weight:900;color:#701515;min-width:32px;text-align:center;">1</span>
             <button onclick="changeCopies(1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">+</button>
           </div>
         </div>
-        <div><span class="input-label">Additional Notes</span><textarea id="reqNotes" rows="3" placeholder="Any specific instructions or additional detailsâ€¦" class="glass-input" style="resize:none;padding:12px 16px;line-height:1.5;"></textarea></div>
-        <div class="info-box"><i class="fa-solid fa-circle-info" style="color:#F5C518;margin-right:6px;"></i>Processing time is typically <strong style="color:#1a0505;">3â€“5 working days</strong>. Bring your student ID when claiming.</div>
+        <div><span class="input-label">Additional Notes</span><textarea id="reqNotes" rows="3" placeholder="Any specific instructions or additional details&hellip;" class="glass-input" style="resize:none;padding:12px 16px;line-height:1.5;"></textarea></div>
+        <div class="info-box"><i class="fa-solid fa-circle-info" style="color:#F5C518;margin-right:6px;"></i>Processing time is typically <strong style="color:#1a0505;">3&ndash;5 working days</strong>. Bring your student ID when claiming.</div>
         <div style="display:flex;gap:10px;">
           <button id="submitReqBtn" onclick="submitRequest()" class="btn-maroon" style="flex:1;padding:13px;font-size:14px;"><i class="fa-solid fa-paper-plane" style="margin-right:8px;"></i>Submit Request</button>
           <button onclick="goTo('page-student')" class="btn-ghost" style="padding:13px 20px;">Cancel</button>
@@ -304,7 +304,7 @@
       <button onclick="goTo('page-student')" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <div style="display:flex;align-items:center;gap:8px;margin-top:14px;margin-bottom:4px;">
         <div style="width:32px;height:32px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP Seal" style="width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 3px rgba(139,26,26,.25));"></div>
-        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro Â· Student Services Office</div>
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro &middot; Student Services Office</div>
       </div>
       <div class="page-title">Book an Appointment</div>
       <div class="page-sub">Choose a date and time slot to visit the SSO.</div>
@@ -340,12 +340,12 @@
           <div style="width:32px;height:32px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP Seal" style="width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 3px rgba(139,26,26,.25));"></div>
           <div>
             <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.68);">Polytechnic University of the Philippines</div>
-            <div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(139,26,26,.4);">Student Services Office â€” San Pedro Campus</div>
+            <div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(139,26,26,.4);">Student Services Office &mdash; San Pedro Campus</div>
           </div>
         </div>
         <div class="breadcrumb"><i class="fa-solid fa-shield-halved" style="margin-right:4px;"></i>Admin / Dashboard</div>
         <div class="page-title">Processing Command Center</div>
-        <div class="page-sub">SSO Staff Â· <span style="font-weight:700;color:rgba(20,4,4,.85);">Monday, June 22, 2026</span></div>
+        <div class="page-sub">SSO Staff &middot; <span style="font-weight:700;color:rgba(20,4,4,.85);">Monday, June 22, 2026</span></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <button onclick="goTo('page-scanner')" class="btn-maroon" style="padding:10px 18px;font-size:13px;"><i class="fa-solid fa-qrcode" style="margin-right:6px;"></i>Open Scanner</button>
@@ -384,7 +384,7 @@
         <div style="font-size:15px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-users-line" style="color:#D4A017;margin-right:8px;"></i>Today's Queue</div>
         <div style="position:relative;margin-bottom:10px;">
           <i class="fa-solid fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(30,5,5,.55);font-size:11px;"></i>
-          <input id="queueSearch" type="text" placeholder="Search appointment no. (APT-004), name, or student noâ€¦" class="glass-input" style="padding-left:30px;padding-top:7px;padding-bottom:7px;font-size:12px;" oninput="renderQueue()"/>
+          <input id="queueSearch" type="text" placeholder="Search appointment no. (APT-004), name, or student no&hellip;" class="glass-input" style="padding-left:30px;padding-top:7px;padding-bottom:7px;font-size:12px;" oninput="renderQueue()"/>
         </div>
         <div style="font-size:10px;font-weight:800;letter-spacing:.07em;color:rgba(30,5,5,.62);text-transform:uppercase;margin:2px 0 6px;">Waiting to be served</div>
         <div id="queueList" style="display:flex;flex-direction:column;gap:6px;max-height:314px;overflow-y:auto;padding-right:2px;"></div>
@@ -409,8 +409,8 @@
           <select id="adminSort" class="glass-input" style="width:auto;padding:6px 12px;font-size:12px;" onchange="renderAdminTable()">
             <option value="new">Newest First</option>
             <option value="old">Oldest First</option>
-            <option value="doc">Document Aâ€“Z</option>
-            <option value="stu">Student Aâ€“Z</option>
+            <option value="doc">Document A&ndash;Z</option>
+            <option value="stu">Student A&ndash;Z</option>
           </select>
           <select id="adminStatusFilter" class="glass-input" style="width:auto;padding:6px 12px;font-size:12px;" onchange="renderAdminTable()">
             <option value="">All Statuses</option>
@@ -422,7 +422,7 @@
           </select>
           <div style="position:relative;">
             <i class="fa-solid fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(30,5,5,.55);font-size:11px;"></i>
-            <input id="adminSearch" type="text" placeholder="Search student or documentâ€¦" class="glass-input" style="padding-left:30px;padding-top:6px;padding-bottom:6px;font-size:12px;width:210px;" oninput="renderAdminTable()"/>
+            <input id="adminSearch" type="text" placeholder="Search student or document&hellip;" class="glass-input" style="padding-left:30px;padding-top:6px;padding-bottom:6px;font-size:12px;width:210px;" oninput="renderAdminTable()"/>
           </div>
         </div>
       </div>
@@ -483,7 +483,7 @@
       </div>
       <div id="rejectModalMeta" style="font-size:12px;color:rgba(30,5,5,.65);background:rgba(255,255,255,.7);border:1px solid rgba(139,26,26,.1);border-radius:10px;padding:10px 12px;margin-bottom:12px;"></div>
       <span class="input-label">Reason for Rejection <span style="color:#f87171;">*</span></span>
-      <textarea id="rejectReasonInput" class="glass-input" rows="4" placeholder="e.g., Incomplete requirements â€” please attach a photocopy of your registration form and re-submit."></textarea>
+      <textarea id="rejectReasonInput" class="glass-input" rows="4" placeholder="e.g., Incomplete requirements &mdash; please attach a photocopy of your registration form and re-submit."></textarea>
       <div id="rejectReasonErr" style="display:none;font-size:11px;font-weight:700;color:#b91c1c;margin-top:5px;"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i>A reason is required so the student knows what to fix.</div>
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button onclick="confirmReject()" style="flex:1;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#b91c1c;font-weight:800;padding:11px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-circle-xmark" style="margin-right:6px;"></i>Confirm Rejection</button>
@@ -649,7 +649,7 @@
       <button onclick="goBack()" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <div style="display:flex;align-items:center;gap:8px;margin-top:14px;margin-bottom:4px;">
         <div style="width:32px;height:32px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP Seal" style="width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 3px rgba(139,26,26,.25));"></div>
-        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro Â· Student Services Office</div>
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro &middot; Student Services Office</div>
       </div>
       <div class="page-title">QR Scanner</div>
       <div class="page-sub">Point the camera at a student's QR code to verify their document.</div>
@@ -689,7 +689,7 @@
     <!-- v3.1: Verify by Reference (REQ or CLM) -->
     <div class="glass-card" style="padding:20px;margin-bottom:16px;">
       <div style="font-size:14px;font-weight:800;color:#1a0505;margin-bottom:4px;"><i class="fa-solid fa-magnifying-glass-chart" style="color:#8B1A1A;margin-right:7px;"></i>Verify by Reference</div>
-      <div style="font-size:11px;color:rgba(30,5,5,.6);margin-bottom:12px;">Enter a Request Ref (REQ-â€¦) or Claiming Ref (CLM-â€¦) to verify authenticity, view claim details, or complete a claim.</div>
+      <div style="font-size:11px;color:rgba(30,5,5,.6);margin-bottom:12px;">Enter a Request Ref (REQ-&hellip;) or Claiming Ref (CLM-&hellip;) to verify authenticity, view claim details, or complete a claim.</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <input id="verifyRefInput" class="glass-input" style="flex:1;min-width:200px;font-family:monospace;" placeholder="e.g. REQ-2026-042 or CLM-2026-00001" onkeydown="if(event.key==='Enter')verifyRef()">
         <button onclick="verifyRef()" class="btn-maroon" style="padding:11px 20px;"><i class="fa-solid fa-shield-halved" style="margin-right:6px;"></i>Verify</button>
@@ -793,4 +793,3 @@ function stopScanner() {
 
 <!-- PAGE: QR SCANNER -->
 <div id="page-scanner" class="page">
-   
