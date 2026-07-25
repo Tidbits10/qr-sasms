@@ -11,7 +11,9 @@ export async function GET() {
 
   const where = auth.role === "student" ? { studentId: auth.studentId || "" } : {};
   const rows = await prisma.documentRequest.findMany({ where, orderBy: { createdAt: "desc" } });
-  return NextResponse.json(rows.map(serializeRequest));
+  return NextResponse.json(rows.map(serializeRequest), {
+    headers: { "Cache-Control": "no-store, max-age=0" },
+  });
 }
 
 // POST /api/requests — students submit a new document request.

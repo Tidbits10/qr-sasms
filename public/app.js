@@ -15,6 +15,7 @@
 ──────────────────────────────────────────── */
 async function api(url, opts = {}) {
   const init = { method: opts.method || "GET", credentials: "same-origin" };
+  if (init.method === "GET") init.cache = "no-store";
   if (opts.body !== undefined) {
     init.headers = { "Content-Type": "application/json" };
     init.body = JSON.stringify(opts.body);
@@ -741,16 +742,16 @@ function openAdminDetail(reqId) {
   const actDiv = document.getElementById("adminDetailActions");
   if (req.status === "Pending") {
     actDiv.innerHTML = `
-      <button onclick="adminAction('${req.id}','Approved');closeAdminDetail()" style="flex:1;background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-check" style="margin-right:6px;"></i>Approve</button>
+      <button onclick="adminAction('${req.id}','Approved').then((updated)=>{if(updated)closeAdminDetail();})" style="flex:1;background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.4);color:#4ade80;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-check" style="margin-right:6px;"></i>Approve</button>
       <button onclick="closeAdminDetail();openRejectModal('${req.id}')" style="flex:1;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);color:#f87171;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-xmark" style="margin-right:6px;"></i>Reject</button>
       <button onclick="closeAdminDetail()" class="btn-ghost" style="padding:10px 14px;font-size:13px;">Cancel</button>`;
   } else if (req.status === "Approved") {
     actDiv.innerHTML = `
-      <button onclick="adminAction('${req.id}','Ready to Claim');closeAdminDetail()" style="flex:1;background:rgba(245,197,24,.2);border:1px solid rgba(212,160,23,.5);color:#a16207;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-box-open" style="margin-right:6px;"></i>Mark Ready to Claim</button>
+      <button onclick="adminAction('${req.id}','Ready to Claim').then((updated)=>{if(updated)closeAdminDetail();})" style="flex:1;background:rgba(245,197,24,.2);border:1px solid rgba(212,160,23,.5);color:#a16207;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-box-open" style="margin-right:6px;"></i>Mark Ready to Claim</button>
       <button onclick="closeAdminDetail()" class="btn-ghost" style="padding:10px 14px;font-size:13px;">Close</button>`;
   } else if (req.status === "Ready to Claim") {
     actDiv.innerHTML = `
-      <button onclick="adminAction('${req.id}','Completed');openAdminDetail('${req.id}')" style="flex:1;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);color:#1e40af;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-flag-checkered" style="margin-right:6px;"></i>Mark Completed (Claimed)</button>
+      <button onclick="adminAction('${req.id}','Completed').then((updated)=>{if(updated)openAdminDetail('${req.id}');})" style="flex:1;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.4);color:#1e40af;font-weight:800;padding:10px;border-radius:12px;font-size:13px;cursor:pointer;font-family:inherit;"><i class="fa-solid fa-flag-checkered" style="margin-right:6px;"></i>Mark Completed (Claimed)</button>
       <button onclick="closeAdminDetail()" class="btn-ghost" style="padding:10px 14px;font-size:13px;">Close</button>`;
   } else if (req.status === "Completed") {
     actDiv.innerHTML = `
@@ -2623,4 +2624,30 @@ async function resolveProfileChange(id, status) {
   const result = await api(`/api/profile/${encodeURIComponent(id)}`, { method: "PATCH", body: { status } });
   if (!result.ok) return showToast(result.error || "Could not update profile.", "rgba(155,22,22,.85)");
   showToast(`Profile update ${status.toLowerCase()}.`); reviewProfileChanges();
+}
+
+// Apply staff request status changes immediately, then reconcile dashboard data.
+// This prevents the Approve → Ready to Claim → Complete flow from requiring a
+// full browser refresh between each action.
+async function adminAction(reqId, newStatus, reason) {
+  const { ok, data, error } = await api(`/api/requests/${encodeURIComponent(reqId)}`, {
+    method: "PATCH",
+    body: { status: newStatus, reason },
+  });
+  if (!ok) {
+    showToast(error || "Could not update request.", "rgba(155,22,22,.85)");
+    return false;
+  }
+
+  const rowIndex = DB.findIndex((request) => request.id === reqId);
+  if (rowIndex >= 0 && data) DB[rowIndex] = data;
+
+  if (donutChart) { try { donutChart.destroy(); } catch {} donutChart = null; }
+  if (barChartInst) { try { barChartInst.destroy(); } catch {} barChartInst = null; }
+  renderAdminPage();
+  showToast(`${reqId} marked as ${newStatus}.`);
+
+  await Promise.all([loadRequests(), loadAuditLog(), loadEmailLog(), loadAdminActivity()]);
+  renderAdminPage();
+  return true;
 }
