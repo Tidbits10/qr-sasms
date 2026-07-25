@@ -245,7 +245,7 @@
       <button onclick="goTo('page-student')" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</button>
       <div style="display:flex;align-items:center;gap:8px;margin-top:14px;margin-bottom:4px;">
         <div style="width:32px;height:32px;flex-shrink:0;"><img src="/pup-seal.jpg" alt="PUP Seal" style="width:32px;height:32px;border-radius:50%;object-fit:cover;object-position:center;display:block;filter:drop-shadow(0 1px 3px rgba(139,26,26,.25));"></div>
-        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro Â· Student Services Office</div>
+        <div style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(30,5,5,.62);">PUP San Pedro · Student Services Office</div>
       </div>
       <div class="page-title">Submit a Document Request</div>
       <div class="page-sub">Fill out the form below. Track your request status on the dashboard.</div>
@@ -255,7 +255,7 @@
         <div>
           <span class="input-label">Document Type <span style="color:#f87171;">*</span></span>
           <select id="reqDocType" onchange="updateDocHelp(this.value)" class="glass-input">
-            <option value="">â€” Select document type â€”</option>
+            <option value="">-Select document type-</option>
             <option value="gmc">Good Moral Certificate</option>
             <option value="ev">Enrollment Verification</option>
             <option value="auth">Authentication</option>
@@ -268,7 +268,7 @@
         <div>
           <span class="input-label">Purpose / Reason <span style="color:#f87171;">*</span></span>
           <select id="reqPurpose" class="glass-input">
-            <option value="">â€” Select purpose â€”</option>
+            <option value="">-Select purpose-</option>
             <option>Employment</option>
             <option>Further Studies / Graduate School</option>
             <option>Government Transaction</option>
@@ -281,13 +281,13 @@
         <div>
           <span class="input-label">Number of Copies</span>
           <div style="display:flex;align-items:center;gap:14px;margin-top:4px;">
-            <button onclick="changeCopies(-1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">âˆ’</button>
+            <button onclick="changeCopies(-1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">-</button>
             <span id="copiesVal" style="font-size:28px;font-weight:900;color:#701515;min-width:32px;text-align:center;">1</span>
             <button onclick="changeCopies(1)" class="btn-ghost" style="width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:12px;flex-shrink:0;">+</button>
           </div>
         </div>
-        <div><span class="input-label">Additional Notes</span><textarea id="reqNotes" rows="3" placeholder="Any specific instructions or additional detailsâ€¦" class="glass-input" style="resize:none;padding:12px 16px;line-height:1.5;"></textarea></div>
-        <div class="info-box"><i class="fa-solid fa-circle-info" style="color:#F5C518;margin-right:6px;"></i>Processing time is typically <strong style="color:#1a0505;">3â€“5 working days</strong>. Bring your student ID when claiming.</div>
+        <div><span class="input-label">Additional Notes</span><textarea id="reqNotes" rows="3" placeholder="Any specific instructions or additional details" class="glass-input" style="resize:none;padding:12px 16px;line-height:1.5;"></textarea></div>
+        <div class="info-box"><i class="fa-solid fa-circle-info" style="color:#F5C518;margin-right:6px;"></i>Processing time is typically <strong style="color:#1a0505;">3 to 5 working days</strong>. Bring your student ID when claiming.</div>
         <div style="display:flex;gap:10px;">
           <button id="submitReqBtn" onclick="submitRequest()" class="btn-maroon" style="flex:1;padding:13px;font-size:14px;"><i class="fa-solid fa-paper-plane" style="margin-right:8px;"></i>Submit Request</button>
           <button onclick="goTo('page-student')" class="btn-ghost" style="padding:13px 20px;">Cancel</button>
