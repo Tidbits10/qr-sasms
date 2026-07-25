@@ -75,6 +75,7 @@ let knownNotificationIds = new Set();
 let notificationPollingStarted = false;
 let adminDashboardPollingStarted = false;
 let adminDashboardSnapshot = "";
+let adminDashboardRefreshInFlight = false;
 let PENDING_ACCOUNTS = []; // accounts awaiting admin approval
 let MASTERLIST_COUNT = 0;
 let MOD = { referrals: [], idapps: [], bulletins: [], tickets: [], faqs: [], events2: [], complaints: [], forms: [], memos: [] };
@@ -2199,18 +2200,23 @@ function startAdminDashboardPolling() {
     appointments: queueData.map((q) => `${q.q}:${q.served}`),
   });
   window.setInterval(async () => {
-    if (!session || !isAdmin() || document.querySelector(".page.active")?.id !== "page-admin") return;
-    await Promise.all([loadRequests(), loadQueueData(), loadAdminActivity(), loadPendingAccounts()]);
-    const nextSnapshot = JSON.stringify({
-      requests: DB.map((r) => `${r.id}:${r.status}`),
-      appointments: queueData.map((q) => `${q.q}:${q.served}`),
-    });
-    if (nextSnapshot === adminDashboardSnapshot) return;
-    adminDashboardSnapshot = nextSnapshot;
-    if (donutChart) { try { donutChart.destroy(); } catch {} donutChart = null; }
-    if (barChartInst) { try { barChartInst.destroy(); } catch {} barChartInst = null; }
-    renderAdminPage();
-  }, 10000);
+    if (!session || !isAdmin() || adminDashboardRefreshInFlight || document.querySelector(".page.active")?.id !== "page-admin") return;
+    adminDashboardRefreshInFlight = true;
+    try {
+      await Promise.all([loadRequests(), loadQueueData(), loadAdminActivity(), loadPendingAccounts()]);
+      const nextSnapshot = JSON.stringify({
+        requests: DB.map((r) => `${r.id}:${r.status}`),
+        appointments: queueData.map((q) => `${q.q}:${q.served}`),
+      });
+      if (nextSnapshot === adminDashboardSnapshot) return;
+      adminDashboardSnapshot = nextSnapshot;
+      if (donutChart) { try { donutChart.destroy(); } catch {} donutChart = null; }
+      if (barChartInst) { try { barChartInst.destroy(); } catch {} barChartInst = null; }
+      renderAdminPage();
+    } finally {
+      adminDashboardRefreshInFlight = false;
+    }
+  }, 15000);
 }
 function notificationDestination(notification) {
   const text = `${notification.title} ${notification.body}`.toLowerCase();
