@@ -109,11 +109,10 @@ function updateMasterlistStatus() {
     : `<i class="fa-solid fa-triangle-exclamation" style="color:#d97706;margin-right:4px;"></i>No masterlist loaded`;
 }
 
-const DOC_LABELS = { gmc: "Excuse Slip", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other", ev: "Enrollment Verification" };
-const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", ev: "✅ Enrollment Verification — Certifies that you are officially enrolled this term, issued by the SSO for scholarships, allowances, and external requirements.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
+const DOC_LABELS = { gmc: "Excuse Slip", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other" };
+const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
 const DOC_REQUIREMENTS = {
   gmc: ["Valid PUP student ID", "Clear purpose for the request"],
-  ev: ["Valid PUP student ID", "Current enrollment details"],
   auth: ["Original or clear copy of the document to authenticate", "Valid PUP student ID"],
   other: ["Valid PUP student ID", "Describe the requested document in Additional Notes"],
 };
@@ -1658,6 +1657,7 @@ function renderHelpdesk() {
         <div id="chatbotMessages" style="height:420px;overflow-y:auto;padding:14px;background:rgba(255,255,255,.48);border:1px solid rgba(139,26,26,.12);border-radius:14px;display:flex;flex-direction:column;gap:10px;">
           ${chatbotMessages.map((m) => `<div style="display:flex;justify-content:${m.from === "user" ? "flex-end" : "flex-start"};"><div style="max-width:82%;padding:10px 12px;border-radius:12px;background:${m.from === "user" ? "rgba(139,26,26,.14)" : "rgba(245,197,24,.16)"};font-size:13px;color:#1a0505;line-height:1.5;white-space:pre-wrap;">${esc(m.text)}</div></div>`).join("")}
         </div>
+        <div style="margin-top:12px;"><div style="font-size:11px;font-weight:800;color:#8B1A1A;margin-bottom:7px;">Choose a frequently asked question</div><div style="display:flex;gap:7px;flex-wrap:wrap;max-height:108px;overflow-y:auto;padding-right:3px;">${MOD.faqs.length ? MOD.faqs.map((faq) => `<button onclick="chatbotAskFaq('${esc(faq.id)}')" class="btn-ghost" style="padding:7px 10px;font-size:11px;text-align:left;">${esc(faq.q)}</button>`).join("") : '<span style="font-size:11px;color:rgba(30,5,5,.55);">No FAQs are available yet.</span>'}</div></div>
         <div style="display:flex;gap:8px;margin-top:12px;"><input id="chatbotInput" class="glass-input" style="flex:1" placeholder="Ask a question about Student Services…" onkeydown="if(event.key==='Enter')chatbotAsk()"><button onclick="chatbotAsk()" class="btn-maroon" style="padding:10px 16px;"><i class="fa-solid fa-paper-plane"></i> Send</button></div>
       </div>`;
     requestAnimationFrame(() => { const box = document.getElementById("chatbotMessages"); if (box) box.scrollTop = box.scrollHeight; });
@@ -1673,6 +1673,14 @@ function chatbotAsk() {
   const best = scored[0];
   api("/api/faq-analytics", { method: "POST", body: { faqId: best?.score ? best.faq.id : "unmatched" } });
   chatbotMessages.push({ from: "bot", text: best?.score ? `${best.faq.a}\n\nSource: ${best.faq.q}` : "I couldn't find a matching FAQ yet. Try different keywords or check the FAQ service for the full list." });
+  renderHelpdesk();
+}
+function chatbotAskFaq(id) {
+  const faq = MOD.faqs.find((item) => item.id === id);
+  if (!faq) return;
+  chatbotMessages.push({ from: "user", text: faq.q });
+  chatbotMessages.push({ from: "bot", text: faq.a });
+  api("/api/faq-analytics", { method: "POST", body: { faqId: faq.id } });
   renderHelpdesk();
 }
 async function hdSubmit() {

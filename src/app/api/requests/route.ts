@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
   if (!docKey || !purpose) {
     return jsonError(400, "Please select a document type and purpose.", "MISSING_FIELDS");
   }
+  if (!Object.prototype.hasOwnProperty.call(DOC_LABELS, docKey)) {
+    return jsonError(400, "That document type is no longer available through Student Services.", "UNAVAILABLE_DOCUMENT_TYPE");
+  }
 
   const id = await nextRequestId();
   const doc = DOC_LABELS[docKey] || docKey;

@@ -85,11 +85,11 @@ async function main() {
     daysAgo: number;
   }> = [
     { id: "REQ-042", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Excuse Slip", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Ready to Claim", daysAgo: 2 },
-    { id: "REQ-040", studentId: "2024-00091-SP-0", studentName: "Maria Santos", doc: "Enrollment Verification", docKey: "ev", purpose: "Scholarship Application", copies: 1, notes: "", status: "Approved", daysAgo: 3 },
-    { id: "REQ-041", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Enrollment Verification", docKey: "ev", purpose: "Government Transaction", copies: 1, notes: "", status: "Approved", daysAgo: 5 },
+    { id: "REQ-040", studentId: "2024-00091-SP-0", studentName: "Maria Santos", doc: "Authentication", docKey: "auth", purpose: "Scholarship Application", copies: 1, notes: "", status: "Approved", daysAgo: 3 },
+    { id: "REQ-041", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Authentication", docKey: "auth", purpose: "Government Transaction", copies: 1, notes: "", status: "Approved", daysAgo: 5 },
     { id: "REQ-038", studentId: "2024-00102-SP-0", studentName: "Pedro Reyes", doc: "Excuse Slip", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 6 },
-    { id: "REQ-036", studentId: "2024-00115-SP-0", studentName: "Ana Flores", doc: "Enrollment Verification", docKey: "ev", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 7 },
-    { id: "REQ-039", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Enrollment Verification", docKey: "ev", purpose: "Further Studies / Graduate School", copies: 2, notes: "Needed for graduate school application", status: "Pending", daysAgo: 8 },
+    { id: "REQ-036", studentId: "2024-00115-SP-0", studentName: "Ana Flores", doc: "Excuse Slip", docKey: "gmc", purpose: "Employment", copies: 1, notes: "", status: "Pending", daysAgo: 7 },
+    { id: "REQ-039", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Authentication", docKey: "auth", purpose: "Further Studies / Graduate School", copies: 2, notes: "Needed for graduate school application", status: "Pending", daysAgo: 8 },
     { id: "REQ-033", studentId: "2024-00134-SP-0", studentName: "Liza Manguba", doc: "Excuse Slip", docKey: "Excuse Slip", purpose: "Employment", copies: 1, notes: "", status: "Rejected", daysAgo: 10 },
     { id: "REQ-030", studentId: "2024-00145-SP-0", studentName: "Rico Aguinaldo", doc: "Authentication", docKey: "auth", purpose: "Government Transaction", copies: 2, notes: "", status: "Pending", daysAgo: 12 },
     { id: "REQ-035", studentId: "2024-00123-SP-0", studentName: "Juan dela Cruz", doc: "Excuse Slip", docKey: "Excuse Slip", purpose: "Personal Copy", copies: 1, notes: "", status: "Rejected", daysAgo: 15 },

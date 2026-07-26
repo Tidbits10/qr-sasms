@@ -10,7 +10,6 @@ export const DOC_LABELS: Record<string, string> = {
   auth: "Authentication",
   excuseslip: "Excuse Slip Copy",
   other: "Other",
-  ev: "Enrollment Verification",
 };
 
 /** Sequential REQ-<year>-<NNN>, continuing the running counter across all requests. */
