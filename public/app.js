@@ -1254,6 +1254,17 @@ function openAppModal({ title, subtitle = "", icon = "fa-circle-info", content =
     modal.querySelectorAll("button").forEach((button) => {
       if (!/^(Revoke|Reactivate)$/.test(button.textContent.trim())) return;
       const rep = assignments.shift(); if (!rep) return;
+      const label = button.previousElementSibling;
+      if (label?.tagName === "SPAN" && rep.studentName) {
+        const bold = label.querySelector("b");
+        if (bold) {
+          bold.textContent = rep.studentName;
+          const studentId = document.createElement("span");
+          studentId.textContent = ` · ${rep.studentId}`;
+          studentId.style.cssText = "color:rgba(30,5,5,.58);font-weight:400;";
+          bold.insertAdjacentElement("afterend", studentId);
+        }
+      }
       const remove = document.createElement("button");
       remove.className = "btn-soft"; remove.textContent = "Remove";
       remove.style.cssText = "padding:3px 8px;font-size:10px;color:#a11;margin-left:5px;";
