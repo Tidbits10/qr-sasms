@@ -183,13 +183,15 @@
             <input id="studentSearch" type="text" placeholder="Search by document or ref&hellip;" class="glass-input" style="padding-left:34px;padding-top:7px;padding-bottom:7px;width:220px;font-size:12px;" oninput="renderStudentTable(this.value)"/>
           </div></div>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="glass-table">
-            <thead><tr><th>Ref No.</th><th>Document</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead>
-            <tbody id="studentTable"></tbody>
-          </table>
-          <div id="studentTableEmpty" class="empty-state" style="display:none;"><i class="fa-solid fa-folder-open"></i>No requests yet.<br><span style="font-size:12px;">Submit your first request to see it here.</span></div>
-          <div id="studentTablePagination"></div>
+        <div class="request-table-shell">
+          <div class="request-table-scroll">
+            <table class="glass-table">
+              <thead><tr><th>Ref No.</th><th>Document</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead>
+              <tbody id="studentTable"></tbody>
+            </table>
+            <div id="studentTableEmpty" class="empty-state" style="display:none;"><i class="fa-solid fa-folder-open"></i>No requests yet.<br><span style="font-size:12px;">Submit your first request to see it here.</span></div>
+          </div>
+          <div id="studentTablePagination" class="table-pagination-bar"></div>
         </div>
       </div>
       <!-- Sidebar -->
@@ -427,13 +429,15 @@
           </div>
         </div>
       </div>
-      <div class="processing-queue-scroll">
-        <table class="glass-table">
-          <thead><tr><th>Student</th><th>Document</th><th>Submitted</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
-          <tbody id="adminTable"></tbody>
-        </table>
-        <div id="adminTableEmpty" class="empty-state" style="display:none;"><i class="fa-solid fa-inbox"></i>No matching requests found.</div>
-        <div id="adminTablePagination"></div>
+      <div class="processing-queue-shell">
+        <div class="processing-queue-scroll">
+          <table class="glass-table">
+            <thead><tr><th>Student</th><th>Document</th><th>Submitted</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+            <tbody id="adminTable"></tbody>
+          </table>
+          <div id="adminTableEmpty" class="empty-state" style="display:none;"><i class="fa-solid fa-inbox"></i>No matching requests found.</div>
+        </div>
+        <div id="adminTablePagination" class="table-pagination-bar"></div>
       </div>
     </div>
     <!-- Audit Logs -->
