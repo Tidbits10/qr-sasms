@@ -52,10 +52,14 @@ export async function POST(req: NextRequest) {
   if (completed.count !== 1) return jsonError(409, "This QR code was already used or is no longer valid.", "QR_ALREADY_USED");
   const updated = await prisma.documentRequest.findUniqueOrThrow({ where: { id: record.id } });
 
-  try {
+  // The claim is already atomically committed. Do not keep the scanner page
+  // loading while an external SMTP provider is slow or temporarily offline.
+  void (async () => {
+    try {
     await addAudit("INFO", `${updated.id} claimed by secure QR scan — ${claimRef} issued by ${auth.name}.`);
     await addNotification(updated.studentId, "Document Claimed", `${updated.doc} (${updated.id}) was released. Claiming reference: ${claimRef}.`);
     await notifyStudentByEmail({ studentId: updated.studentId, name: updated.studentName, title: "Document Claimed", message: `Your ${updated.doc} (${updated.id}) has been released. Claim reference: ${claimRef}.`, ref: updated.id });
-  } catch (error) { console.error("QR claim notification failed", error); }
+    } catch (error) { console.error("QR claim notification failed", error); }
+  })();
   return NextResponse.json({ found: true, completed: true, request: serializeRequest(updated) });
 }
