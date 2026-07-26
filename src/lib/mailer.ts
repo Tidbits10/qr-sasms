@@ -13,11 +13,18 @@ function getTransporter(): Transporter | null {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === "true",
+    // Render's outbound network commonly has IPv4 but no usable IPv6 route.
+    // Gmail DNS returns IPv6 first on some runs, causing ENETUNREACH unless
+    // Nodemailer is explicitly told to use IPv4.
+    family: 4,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-  });
+  } as any);
   return transporter;
 }
 
