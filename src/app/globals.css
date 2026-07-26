@@ -363,6 +363,8 @@ select.glass-input{appearance:none;cursor:pointer;}
 .qr-corner.tr{top:-2px;right:-2px;border-width:3px 3px 0 0;border-radius:0 20px 0 0;}
 .qr-corner.bl{bottom:-2px;left:-2px;border-width:0 0 3px 3px;border-radius:0 0 0 20px;}
 .qr-corner.br{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 20px 0;}
+#reader video{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:20px!important;}
+#reader__dashboard_section_csr span,#reader__dashboard_section_csr button{display:none!important;}
 .scan-line{position:absolute;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,rgba(139,26,26,.85),transparent);border-radius:2px;box-shadow:0 0 12px rgba(139,26,26,.5),0 0 4px rgba(155,22,22,.8);animation:scan 2.2s ease-in-out infinite;}
 @keyframes scan{0%{top:6%;opacity:0;}12%{opacity:1;}88%{opacity:1;}100%{top:88%;opacity:0;}}
 

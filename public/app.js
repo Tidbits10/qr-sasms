@@ -137,6 +137,11 @@ let rescheduleCalYear = new Date().getFullYear();
 const rescheduleDateLabel = (day) => new Date(rescheduleCalYear, rescheduleCalMonth, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 let rescheduleAvailability = { bookedTimes: [], myAppointment: null };
 let qrRenderedFor = null;
+let liveEventSource = null;
+let liveRefreshAt = 0;
+let qrScanner = null;
+let qrScannerRunning = false;
+let qrClaimBusy = false;
 let donutChart = null;
 let barChartInst = null;
 
@@ -144,6 +149,7 @@ async function restoreSession() {
   const r = await api("/api/auth/me");
   if (r.ok && r.data && r.data.user) {
     session = r.data.user;
+    startLiveUpdates();
     await goTo((session.role === "admin" || session.role === "super_admin") ? "page-admin" : session.role === "scanner" ? "page-scanner" : "page-student");
   }
 }
@@ -195,6 +201,7 @@ async function doLogin() {
   }
 
   session = data.user;
+  startLiveUpdates();
   if (session.role === "student") await goTo("page-student");
   else if (session.role === "admin" || session.role === "super_admin") await goTo("page-admin");
   else await goTo("page-scanner");
@@ -369,6 +376,7 @@ function toggleMobileMenu() { document.getElementById("mobileMenu").classList.to
 function closeMobileMenu() { document.getElementById("mobileMenu").classList.remove("open"); document.getElementById("mobileMenuBackdrop").classList.remove("open"); }
 async function signOut() {
   await api("/api/auth/logout", { method: "POST" });
+  if (liveEventSource) { liveEventSource.close(); liveEventSource = null; }
   session = null;
   await goTo("page-login");
   showToast("Signed out successfully.");
@@ -524,7 +532,8 @@ function showQR(reqId) {
   if (qrRenderedFor !== reqId) {
     const canvas = document.getElementById("qrCanvas");
     canvas.innerHTML = "";
-    new QRCode(canvas, { text: `QR-SASMS:${req.id}:${req.studentName}:${req.doc}`, width: 160, height: 160, colorDark: "#8B1A1A", colorLight: "#ffffff" });
+    if (!req.qrToken) { showToast("Secure QR is available only after the request is marked Ready to Claim.", "rgba(180,130,0,.85)"); return; }
+    new QRCode(canvas, { text: req.qrToken, width: 160, height: 160, colorDark: "#8B1A1A", colorLight: "#ffffff" });
     qrRenderedFor = reqId;
   }
 }
@@ -2765,4 +2774,101 @@ async function adminAction(reqId, newStatus, reason) {
   await Promise.all([loadRequests(), loadAuditLog(), loadEmailLog(), loadAdminActivity()]);
   renderAdminPage();
   return true;
+}
+
+/* Production QR/PDF/live-update layer. These definitions intentionally
+   replace the old prototype scanner and print-popup flows above. */
+function downloadRequestPdf(reqId, type) {
+  window.location.assign(`/api/requests/${encodeURIComponent(reqId)}/pdf?type=${encodeURIComponent(type)}`);
+}
+function printReceipt(reqId) { downloadRequestPdf(reqId, "receipt"); }
+function printApproval(reqId) { downloadRequestPdf(reqId, "approval"); }
+
+function startLiveUpdates() {
+  if (!session || liveEventSource || !window.EventSource) return;
+  liveEventSource = new EventSource("/api/events");
+  liveEventSource.addEventListener("refresh", refreshLiveData);
+  liveEventSource.addEventListener("connected", refreshLiveData);
+  liveEventSource.onerror = () => { /* EventSource reconnects automatically. */ };
+}
+async function refreshLiveData() {
+  if (!session || Date.now() - liveRefreshAt < 2500) return;
+  liveRefreshAt = Date.now();
+  const page = document.querySelector(".page.active")?.id;
+  await loadNotifs(); updateBellBadge();
+  if (page === "page-admin") {
+    await Promise.all([loadRequests(), loadQueueData(), loadAdminActivity(), loadPendingAccounts(), loadAuditLog(), loadEmailLog()]);
+    renderAdminPage();
+  } else if (page === "page-student") {
+    await loadRequests(); renderStudentPage();
+  } else if (page === "page-scanner") {
+    await loadRequests();
+  }
+}
+
+function scannerResult(html, valid) {
+  const box = document.getElementById("verifyRefResult");
+  if (box) box.innerHTML = `<div class="glass-card" style="padding:16px;border:1px solid ${valid ? "rgba(34,197,94,.4)" : "rgba(220,38,38,.4)"};">${html}</div>`;
+}
+async function completeScannedQr(decodedText) {
+  if (qrClaimBusy) return;
+  qrClaimBusy = true;
+  scannerResult(`<b><i class="fa-solid fa-spinner fa-spin" style="margin-right:7px;"></i>Verifying secure QR code…</b>`, true);
+  const result = await api("/api/requests/verify", { method: "POST", body: { token: decodedText } });
+  qrClaimBusy = false;
+  if (!result.ok || !result.data?.completed) {
+    scannerResult(`<div style="font-weight:900;color:#991b1b;"><i class="fa-solid fa-circle-xmark" style="margin-right:7px;"></i>QR CODE NOT ACCEPTED</div><div style="font-size:12px;margin-top:6px;">${esc(result.error || "The QR code is invalid, expired, or already used.")}</div>`, false);
+    showToast(result.error || "QR verification failed.", "rgba(155,22,22,.85)");
+    return;
+  }
+  const r = result.data.request;
+  scannerResult(`<div style="font-weight:900;color:#166534;"><i class="fa-solid fa-circle-check" style="margin-right:7px;"></i>DOCUMENT RELEASED</div><div style="font-size:12px;margin-top:8px;line-height:1.6;"><b>${esc(r.doc)}</b><br>${esc(r.studentName)} · ${esc(r.id)}<br>Claim reference: <b>${esc(r.claimRef)}</b></div><button class="btn-maroon" style="margin-top:12px;padding:9px 14px;" onclick="printReceipt('${esc(r.id)}')"><i class="fa-solid fa-file-pdf"></i> Download Receipt PDF</button>`, true);
+  await refreshLiveData();
+  showToast("Document verified and marked Completed.");
+}
+async function startScanner() {
+  if (qrScannerRunning) return;
+  if (!window.Html5Qrcode) return showToast("QR camera library is unavailable. Check your internet connection and reload.", "rgba(155,22,22,.85)");
+  const reader = document.getElementById("reader");
+  if (!reader) return showToast("Scanner view is unavailable.", "rgba(155,22,22,.85)");
+  try {
+    qrScanner = qrScanner || new Html5Qrcode("reader");
+    await qrScanner.start({ facingMode: { exact: "environment" } }, { fps: 10, qrbox: { width: 220, height: 220 } }, async (decodedText) => {
+      if (!qrScannerRunning) return;
+      await stopScanner();
+      await completeScannedQr(decodedText);
+    }, () => {});
+    qrScannerRunning = true;
+    document.getElementById("scanBtn")?.style && (document.getElementById("scanBtn").style.display = "none");
+    document.getElementById("stopBtn")?.style && (document.getElementById("stopBtn").style.display = "inline-block");
+  } catch (error) {
+    qrScannerRunning = false;
+    showToast("Camera could not start. Allow camera permission and use HTTPS in production.", "rgba(155,22,22,.85)");
+  }
+}
+async function stopScanner() {
+  if (qrScanner && qrScannerRunning) { try { await qrScanner.stop(); } catch (_) {} }
+  qrScannerRunning = false;
+  const start = document.getElementById("scanBtn"), stop = document.getElementById("stopBtn");
+  if (start) start.style.display = "inline-block";
+  if (stop) stop.style.display = "none";
+}
+
+function restoreBackup() {
+  openAppModal({ title: "Full Database Restore", subtitle: "This replaces all QR-SASMS records using a version 2 backup. This cannot be undone.", icon: "fa-triangle-exclamation", content: `<div class="app-row"><div><div class="app-row-title" style="color:#991b1b;">Danger: all current records will be replaced</div><div class="app-row-meta">Users, requests, appointments, complaints, settings, modules, notifications, and logs will be restored from the selected backup.</div></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="pickBackupFile()"><i class="fa-solid fa-file-arrow-up"></i> Choose full backup</button></div>` });
+}
+function pickBackupFile() {
+  const picker = document.createElement("input"); picker.type = "file"; picker.accept = ".json,application/json";
+  picker.onchange = () => { const file = picker.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = async () => {
+    try {
+      const backup = JSON.parse(String(reader.result));
+      if (backup.version !== 2) return showToast("Use a full version 2 QR-SASMS backup file.", "rgba(155,22,22,.85)");
+      const confirmation = prompt("This permanently replaces ALL current data. Type RESTORE ALL DATA to continue:", "");
+      if (confirmation !== "RESTORE ALL DATA") return showToast("Restore cancelled — confirmation did not match.", "rgba(180,130,0,.85)");
+      const result = await api("/api/backup", { method: "POST", body: { backup, confirmation } });
+      if (result.ok) { closeAppModal(); showToast(`Full backup restored: ${result.data.restored.users} users and ${result.data.restored.requests} requests.`); setTimeout(() => window.location.reload(), 900); }
+      else showToast(result.error || "Could not restore backup.", "rgba(155,22,22,.85)");
+    } catch { showToast("The selected file is not a valid QR-SASMS full backup.", "rgba(155,22,22,.85)"); }
+  }; reader.readAsText(file); };
+  picker.click();
 }

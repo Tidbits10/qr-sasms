@@ -5,8 +5,16 @@ import { addAudit, addNotification, notifyStudentByEmail } from "@/lib/notify";
 import { nextClaimRef, serializeRequest } from "@/lib/requests";
 import { fnow } from "@/lib/format";
 import { signDocument } from "@/lib/signature";
+import { claimTokenExpiry, createClaimToken } from "@/lib/claim-token";
 
 const VALID_STATUSES = ["Pending", "Approved", "Ready to Claim", "Rejected", "Completed"];
+const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  Pending: ["Approved", "Rejected"],
+  Approved: ["Ready to Claim", "Rejected"],
+  "Ready to Claim": ["Completed"],
+  Rejected: [],
+  Completed: [],
+};
 
 function statusMessage(status: string, req: { doc: string; id: string; rejectReason?: string | null; claimRef?: string | null; claimedAt?: string | null; claimedBy?: string | null }) {
   switch (status) {
@@ -45,6 +53,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const existing = await prisma.documentRequest.findUnique({ where: { id } });
   if (!existing) return jsonError(404, "Request not found.", "NOT_FOUND");
 
+  if (!ALLOWED_TRANSITIONS[existing.status]?.includes(newStatus)) {
+    return jsonError(409, `Cannot change a ${existing.status} request to ${newStatus}.`, "INVALID_STATUS_TRANSITION");
+  }
+
   // A QR code represents a release authorization, so it can only be used once:
   // only a request currently marked Ready to Claim may be completed.
   if (newStatus === "Completed" && existing.status !== "Ready to Claim") {
@@ -64,7 +76,20 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     data.rejectedBy = auth.name;
   }
 
+  if (existing.status === "Ready to Claim" && newStatus !== "Ready to Claim") {
+    data.claimToken = null;
+    data.claimTokenExpiry = null;
+  }
+
   if (["Approved", "Ready to Claim", "Completed"].includes(newStatus)) data.signature = signDocument(existing.id, existing.studentId, newStatus);
+
+  // Issue a fresh opaque QR release authorization only when a document is
+  // ready. Any old code is replaced, expires after 72 hours, and cannot reveal
+  // personal data when photographed or forwarded.
+  if (newStatus === "Ready to Claim") {
+    data.claimToken = createClaimToken();
+    data.claimTokenExpiry = claimTokenExpiry();
+  }
 
   let claimRef = existing.claimRef;
   if (newStatus === "Completed" && !existing.claimRef) {
@@ -72,6 +97,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     data.claimRef = claimRef;
     data.claimedAt = fnow();
     data.claimedBy = auth.name;
+    data.claimToken = null;
+    data.claimTokenExpiry = null;
   }
 
   const updated = await prisma.documentRequest.update({ where: { id }, data });

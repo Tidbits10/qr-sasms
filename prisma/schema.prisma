@@ -62,6 +62,10 @@ model DocumentRequest {
   rejectedAt   String?
   rejectedBy   String?
   claimRef     String?  @unique // CLM-YYYY-NNNNN
+  // Opaque, random, one-time QR release token. It intentionally contains no
+  // student or document information and is invalidated once the claim closes.
+  claimToken       String?   @unique
+  claimTokenExpiry DateTime?
   claimedAt    String?
   claimedBy    String?
   reuploadName String?

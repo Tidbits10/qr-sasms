@@ -97,7 +97,6 @@
     </div>
   </div>
 </div>
-
 <!--  PAGE: REGISTER  -->
 <div id="page-register" class="page auth-page" style="align-items:center;justify-content:center;min-height:100vh;padding:24px;">
   <div style="width:100%;max-width:480px;">
@@ -150,7 +149,6 @@
     </div>
   </div>
 </div>
-
 <!--  PAGE: STUDENT DASHBOARD  -->
 <div id="page-student" class="page">
   <div style="max-width:1200px;margin:0 auto;padding:0 20px 40px;">
@@ -686,11 +684,6 @@
     </button>
 </div>
 
-<!--Verify by Reference card-->
-<div class="card" ...>
-    ...
-</div>
-
     <!-- v3.1: Verify by Reference (REQ or CLM) -->
     <div class="glass-card" style="padding:20px;margin-bottom:16px;">
       <div style="font-size:14px;font-weight:800;color:#1a0505;margin-bottom:4px;"><i class="fa-solid fa-magnifying-glass-chart" style="color:#8B1A1A;margin-right:7px;"></i>Verify by Reference</div>
@@ -724,77 +717,3 @@
   </div>
 </div>
 
-<!-- HTML5-QRCode Library -->
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
-<!--  JAVASCRIPT  -->
-
-<script>
-let html5QrCode = null;
-
-function startScanner() {
-    // I-hide ang button pag bukas ng camera, ipakita ang stop button kung gusto i-cancel
-    document.getElementById('scanBtn').style.display = 'none';
-    document.getElementById('stopBtn').style.display = 'inline-block';
-
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-    }
-    
-    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
-
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        (decodedText, decodedResult) => {
-            console.log(`Code matched = ${decodedText}`);
-            
-            // AUTOMATIC NA PATAYIN ANG CAMERA PAGKATAPOS MA-SCAN
-            stopScanner();
-            
-            // Dito mo ilalagay ang pagpasa sa database/backend mo
-            alert("QR Scanned successfully: " + decodedText);
-        },
-        (errorMessage) => {
-            // Normal error habang naghahanap
-        }
-    ).catch((err) => {
-        console.error("Unable to start scanning.", err);
-        alert("Hindi mabuksan ang camera. Siguraduhing pinayagan mo ang permissions.");
-        stopScanner();
-    });
-}
-
-function stopScanner() {
-    if (html5QrCode) {  
-        html5QrCode.stop().then(() => {
-            console.log("Scanner stopped.");
-        }).catch((err) => {
-            console.error("Failed to stop scanner. ", err);
-        });
-    }
-    
-    // Ibalik ang itsura ng mga buttons
-    document.getElementById('scanBtn').style.display = 'inline-block';
-    document.getElementById('stopBtn').style.display = 'none';
-}
-</script>
-
-<style>
-    /* #reader container */
-    #reader video {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-        border-radius: 20px !important;
-    }
-    
-    /* default text o elements na binubuo ng library */
-    #reader__dashboard_section_csr span, 
-    #reader__dashboard_section_csr button {
-        display: none !important;
-    }
-</style>
-
-<!-- PAGE: QR SCANNER -->
-<div id="page-scanner" class="page">

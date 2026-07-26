@@ -61,6 +61,10 @@ export function serializeRequest(r: DocumentRequest) {
     reuploadUrl: r.reuploadUrl || undefined,
     signature: r.signature || undefined,
     claimRef: r.claimRef || undefined,
+    // The token is intentionally opaque and only issued while this release is
+    // still eligible. Never expose request metadata through the QR payload.
+    qrToken: r.status === "Ready to Claim" ? r.claimToken || undefined : undefined,
+    qrExpiresAt: r.status === "Ready to Claim" ? r.claimTokenExpiry?.toISOString() || undefined : undefined,
     claimedAt: r.claimedAt || undefined,
     claimedBy: r.claimedBy || undefined,
   };
