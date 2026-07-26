@@ -413,11 +413,13 @@ function renderStudentEventStatus() {
   if (!el || !session) return;
   const mine = (MOD.events2 || []).filter((event) => event.sn === session.id).slice().reverse();
   const canSubmitEvent = MY_ORGANIZATIONS.length > 0;
-  // This card is intentionally hidden for ordinary student accounts.  Event
-  // requests are visible only after staff assigned an active representative.
-  if (!canSubmitEvent) { el.style.display = "none"; el.innerHTML = ""; return; }
+  // A revoked officer loses submission access, but never loses visibility of
+  // their own existing event-request history.
+  if (!canSubmitEvent && !mine.length) { el.style.display = "none"; el.innerHTML = ""; return; }
   el.style.display = "block";
-  const eventButton = `<button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button>`;
+  const eventButton = canSubmitEvent
+    ? `<button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button>`
+    : `<span style="font-size:11px;color:rgba(30,5,5,.55);">Representative access is inactive</span>`;
   el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div>${eventButton}</div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? mine.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>`;
 }
 
