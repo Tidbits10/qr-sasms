@@ -196,6 +196,7 @@ model EventRequest {
   name         String
   title        String
   org          String
+  organizationId String?
   adviser      String
   date         String
   time         String
@@ -211,6 +212,31 @@ model EventRequest {
   createdAt    DateTime @default(now())
 
   @@index([sn])
+  @@index([organizationId, date])
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  adviserName String
+  schoolYear  String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  representatives OrganizationRepresentative[]
+}
+
+model OrganizationRepresentative {
+  id             String   @id @default(uuid())
+  organizationId String
+  studentId      String
+  assignedBy     String
+  active         Boolean  @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, studentId])
+  @@index([studentId, active])
 }
 
 model Complaint {

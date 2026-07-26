@@ -85,6 +85,7 @@ let adminRequestPage = 1;
 let studentRequestPage = 1;
 let lastAdminTableFilterKey = "";
 let lastStudentTableFilterKey = "";
+let MY_ORGANIZATIONS = [];
 
 async function loadRequests() { const r = await api("/api/requests"); DB = r.ok ? r.data : []; }
 async function loadAdminActivity() { const r = await api("/api/admin/activity"); ADMIN_ACTIVITY = r.ok ? r.data : null; }
@@ -95,6 +96,7 @@ async function loadEmailStatus() { const r = await api("/api/emails/status"); EM
 async function loadNotifs() { const r = await api("/api/notifications"); NOTIFS = r.ok ? r.data : []; }
 async function loadPendingAccounts() { const r = await api("/api/users/pending"); PENDING_ACCOUNTS = r.ok ? r.data : []; }
 async function loadModule(key) { const r = await api(`/api/modules/${key}`); MOD[key] = r.ok ? r.data : []; }
+async function loadMyOrganizations() { const r = await api("/api/organizations/mine"); MY_ORGANIZATIONS = r.ok ? r.data : []; }
 
 async function refreshMasterlistStatus() {
   const r = await api("/api/masterlist");
@@ -280,7 +282,7 @@ async function goTo(pageId) {
 
   // Preload whatever data this page needs, then render (mirrors the
   // original's synchronous render-from-cache functions below).
-  if (pageId === "page-student") { await Promise.all([loadRequests(), loadModule("events2")]); renderStudentPage(); }
+  if (pageId === "page-student") { await Promise.all([loadRequests(), loadModule("events2"), loadMyOrganizations()]); renderStudentPage(); }
   if (pageId === "page-admin") {
     await Promise.all([loadRequests(), loadQueueData(), loadAuditLog(), loadEmailLog(), loadEmailStatus(), loadPendingAccounts(), refreshMasterlistStatus(), loadAdminActivity()]);
     renderAdminPage();
@@ -294,7 +296,7 @@ async function goTo(pageId) {
   if (pageId === "page-bulletin") { await loadModule("bulletins"); renderBulletin(); }
   if (pageId === "page-helpdesk") { await Promise.all([loadModule("tickets"), loadModule("faqs")]); renderHelpdesk(); }
   if (pageId === "page-faq") { await loadModule("faqs"); renderFaq(); }
-  if (pageId === "page-events2") { await loadModule("events2"); renderEvents2(); }
+  if (pageId === "page-events2") { await Promise.all([loadModule("events2"), isAdmin() ? Promise.resolve() : loadMyOrganizations()]); renderEvents2(); }
   if (pageId === "page-complaint") { await loadModule("complaints"); renderComplaint(); }
   if (pageId === "page-forms") { await loadModule("forms"); renderForms(); }
   if (pageId === "page-memo") { await loadModule("memos"); renderMemo(); }
@@ -410,7 +412,11 @@ function renderStudentEventStatus() {
   const el = document.getElementById("studentEventStatusCard");
   if (!el || !session) return;
   const mine = (MOD.events2 || []).filter((event) => event.sn === session.id).slice().reverse();
-  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div><button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button></div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? mine.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>`;
+  const canSubmitEvent = MY_ORGANIZATIONS.length > 0;
+  const eventButton = canSubmitEvent
+    ? `<button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button>`
+    : `<span style="font-size:11px;color:rgba(30,5,5,.55);">Representative access required to submit</span>`;
+  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div>${eventButton}</div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? mine.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>`;
 }
 
 async function renderStudentAppointment() {
@@ -1169,6 +1175,7 @@ const STUDENT_SERVICES = [
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Downloadable Forms", d: "Official OSS forms" },
 ];
 const ADMIN_SERVICES = [
+  { action: "manageOrganizations", icon: "fa-people-group", t: "Organizations & Representatives", d: "Assign verified student officers to event access" },
   { action: "manageMasterlist", icon: "fa-users-rectangle", t: "Masterlist Manager", d: "Add, edit, or remove masterlist entries" },
   { action: "manageMasterlistGroups", icon: "fa-layer-group", t: "Masterlist Groups", d: "Organize by school year, course, and year level" },
   { action: "manageStudentAccounts", icon: "fa-user-lock", t: "Student Accounts", d: "Place accounts on hold or reactivate them" },
@@ -1240,6 +1247,43 @@ function openAppModal({ title, subtitle = "", icon = "fa-circle-info", content =
   document.body.appendChild(modal); return modal;
 }
 function modalField(label, id, value = "", extra = "") { return `<div class="app-field ${extra}"><label for="${id}">${esc(label)}</label><input id="${id}" class="glass-input" value="${esc(value)}"></div>`; }
+
+async function manageOrganizations() {
+  const result = await api("/api/organizations");
+  if (!result.ok) return showToast(result.error || "Could not load organizations.", "rgba(155,22,22,.85)");
+  const organizations = result.data || [];
+  const rows = organizations.map((org) => {
+    const reps = (org.representatives || []).map((rep) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(139,26,26,.08);font-size:11px;"><span><b>${esc(rep.studentId)}</b> ${rep.active ? "<span style='color:#16803c;'>Active</span>" : "<span style='color:#a11;'>Revoked</span>"}${rep.expiresAt ? ` · until ${new Date(rep.expiresAt).toLocaleDateString()}` : ""}</span><button class="btn-soft" style="padding:3px 8px;font-size:10px;" onclick="setOrganizationRep('${rep.id}',${!rep.active})">${rep.active ? "Revoke" : "Reactivate"}</button></div>`).join("") || `<div style="font-size:11px;color:rgba(30,5,5,.55);padding-top:6px;">No representative assigned.</div>`;
+    return `<div class="glass-card" style="padding:13px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><div><b style="color:#1a0505;">${esc(org.name)}</b><div style="font-size:11px;color:rgba(30,5,5,.58);margin-top:3px;">Adviser: ${esc(org.adviserName)}${org.schoolYear ? ` · ${esc(org.schoolYear)}` : ""}</div></div><div style="display:flex;gap:6px;"><button class="btn-maroon" style="padding:6px 9px;font-size:11px;" onclick="assignOrganizationRep('${org.id}','${esc(org.name)}')">Assign officer</button>${isSuperAdmin() ? `<button class="btn-soft" style="padding:6px 9px;font-size:11px;" onclick="setOrganizationActive('${org.id}',${!org.active})">${org.active ? "Deactivate" : "Activate"}</button>` : ""}</div></div><div style="margin-top:8px;">${reps}</div></div>`;
+  }).join("") || emptyState("No organizations registered yet.");
+  openAppModal({ title: "Organizations & Representatives", subtitle: "Only assigned, active student officers may submit Event Requests. Assignments may expire each academic year.", icon: "fa-people-group", wide: true, content: `<div style="max-height:440px;overflow:auto;">${rows}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button>${isSuperAdmin() ? `<button class="btn-maroon" onclick="createOrganization()"><i class="fa-solid fa-plus"></i> Register organization</button>` : ""}</div>` });
+}
+async function createOrganization() {
+  const name = prompt("Organization name:")?.trim(); if (!name) return;
+  const adviserName = prompt("Faculty adviser name:")?.trim(); if (!adviserName) return;
+  const schoolYear = prompt("Academic year (optional, e.g. 2026–2027):")?.trim() || "";
+  const result = await api("/api/organizations", { method: "POST", body: { name, adviserName, schoolYear } });
+  if (!result.ok) return showToast(result.error || "Could not register organization.", "rgba(155,22,22,.85)");
+  showToast("Organization registered."); manageOrganizations();
+}
+async function assignOrganizationRep(organizationId, name) {
+  const studentId = prompt(`Student number of the verified officer for ${name}:`)?.trim(); if (!studentId) return;
+  const expiresAt = prompt("Access expiry date (YYYY-MM-DD; leave blank for no expiry):")?.trim() || "";
+  const result = await api("/api/organizations/representatives", { method: "POST", body: { organizationId, studentId, expiresAt } });
+  if (!result.ok) return showToast(result.error || "Could not assign representative.", "rgba(155,22,22,.85)");
+  showToast("Organization representative assigned."); manageOrganizations();
+}
+async function setOrganizationRep(id, active) {
+  const result = await api("/api/organizations/representatives", { method: "PATCH", body: { id, active } });
+  if (!result.ok) return showToast(result.error || "Could not update representative.", "rgba(155,22,22,.85)");
+  showToast(active ? "Representative reactivated." : "Representative access revoked."); manageOrganizations();
+}
+async function setOrganizationActive(id, active) {
+  if (!confirm(`${active ? "Activate" : "Deactivate"} this organization?`)) return;
+  const result = await api("/api/organizations", { method: "PATCH", body: { id, active } });
+  if (!result.ok) return showToast(result.error || "Could not update organization.", "rgba(155,22,22,.85)");
+  showToast(active ? "Organization activated." : "Organization deactivated."); manageOrganizations();
+}
 
 async function requestProfileEdit() {
   const current = await api("/api/profile"); if (!current.ok) return showToast("❌ Could not load profile.", "rgba(155,22,22,.85)");
@@ -1809,8 +1853,10 @@ function renderEvents2() {
   } else {
     const mine = MOD.events2.filter((e) => e.sn === session.id).reverse();
     const editing = evtEditingId ? MOD.events2.find((e) => e.id === evtEditingId) : null;
+    const canSubmit = MY_ORGANIZATIONS.length > 0;
+    const organizationOptions = MY_ORGANIZATIONS.map((o) => `<option value="${esc(o.id)}" ${editing && editing.organizationId === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("");
     el.innerHTML = `
-      <div class="glass-card" style="padding:18px;margin-bottom:16px;">
+      ${canSubmit ? `<div class="glass-card" style="padding:18px;margin-bottom:16px;">
         <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-plus" style="color:#8B1A1A;margin-right:6px;"></i>${editing ? "Revise Event Request" : "New Event Request"}</div>
         <div style="display:grid;gap:10px;">
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;">
@@ -1818,8 +1864,8 @@ function renderEvents2() {
             <div><span class="input-label">Event Type</span><select id="evType" class="glass-input"><option ${editing && editing.type === "Inside Campus" ? "selected" : ""}>Inside Campus</option><option ${editing && editing.type === "Outside Campus" ? "selected" : ""}>Outside Campus</option></select></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div><span class="input-label">Organization</span><input id="evOrg" class="glass-input" value="${editing ? esc(editing.org) : ""}"></div>
-            <div><span class="input-label">Adviser Name</span><input id="evAdv" class="glass-input" value="${editing ? esc(editing.adviser) : ""}"></div>
+            <div><span class="input-label">Organization</span><select id="evOrgId" onchange="syncEventAdviser()" class="glass-input"><option value="">Select assigned organization</option>${organizationOptions}</select></div>
+            <div><span class="input-label">Faculty Adviser</span><input id="evAdv" class="glass-input" readonly value="${editing ? esc(editing.adviser) : ""}" placeholder="Auto-filled from organization"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
             <div><span class="input-label">Date</span><input id="evDate" type="date" class="glass-input" value="${editing ? esc(editing.date) : ""}"></div>
@@ -1838,7 +1884,7 @@ function renderEvents2() {
             ${editing ? '<button onclick="evtEditingId=null;renderEvents2()" class="btn-ghost" style="padding:11px 14px;">Cancel</button>' : ""}
           </div>
         </div>
-      </div>
+      </div>` : `<div class="glass-card" style="padding:18px;margin-bottom:16px;border:1px solid rgba(139,26,26,.20);"><div style="font-weight:800;color:#8B1A1A;margin-bottom:5px;"><i class="fa-solid fa-user-shield" style="margin-right:6px;"></i>Organization representative access required</div><div style="font-size:12px;color:rgba(30,5,5,.68);line-height:1.6;">Only active student officers assigned by the Super Admin or SSO Admin can submit an Event Request. Contact the Student Services Office if a representative needs to be assigned.</div></div>`}
       <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:8px;">My Event Requests</div>
       ${mine.length ? mine.map((e) => `
         <div class="glass-card" style="padding:14px;margin-bottom:10px;">
@@ -1852,11 +1898,17 @@ function renderEvents2() {
           ${e.history.length ? `<div style="margin-top:6px;font-size:10px;color:rgba(30,5,5,.55);font-family:monospace;">${e.history.map((h) => `${esc(h.ts)} — ${esc(h.status)}${h.note ? ": " + esc(h.note) : ""}`).join("<br>")}</div>` : ""}
         </div>`).join("") : emptyState("No event requests yet.")}
     `;
+    if (canSubmit) syncEventAdviser();
   }
+}
+function syncEventAdviser() {
+  const selected = MY_ORGANIZATIONS.find((org) => org.id === document.getElementById("evOrgId")?.value);
+  const adviser = document.getElementById("evAdv");
+  if (adviser) adviser.value = selected ? selected.adviserName : "";
 }
 async function evtSubmit() {
   const g = (id) => document.getElementById(id).value.trim();
-  const title = g("evTitle"), org = g("evOrg"), adviser = g("evAdv"), date = g("evDate"), time = g("evTime"),
+  const title = g("evTitle"), organizationId = document.getElementById("evOrgId").value, org = MY_ORGANIZATIONS.find((o) => o.id === organizationId)?.name || "", adviser = g("evAdv"), date = g("evDate"), time = g("evTime"),
     venue = g("evVenue"), participants = g("evPart"), budget = g("evBudget"), desc = g("evDesc"),
     type = document.getElementById("evType").value;
   if (!title || !org || !adviser || !date || !venue || !participants || !desc) { showToast("⚠️ Please complete all required fields.", "rgba(180,130,0,.85)"); return; }
@@ -1869,7 +1921,9 @@ async function evtSubmit() {
     docName = uploaded.fileName || ""; docUrl = uploaded.url || "";
   }
 
-  const body = { title, org, adviser, date, time, venue, participants, budget, desc, type, docName, docUrl };
+  if (!organizationId) { showToast("Select an assigned organization first.", "rgba(180,130,0,.85)"); return; }
+  if (!docName && !evtEditingId) { showToast("Upload the adviser endorsement or supporting document.", "rgba(180,130,0,.85)"); return; }
+  const body = { title, organizationId, org, adviser, date, time, venue, participants, budget, desc, type, docName, docUrl };
   const res = evtEditingId
     ? await api(`/api/modules/events2/${encodeURIComponent(evtEditingId)}/resubmit`, { method: "POST", body })
     : await api("/api/modules/events2", { method: "POST", body });

@@ -19,22 +19,45 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const g = (k: string) => (body?.[k] || "").toString().trim();
-  const title = g("title"), org = g("org"), adviser = g("adviser"), date = g("date"),
+  const title = g("title"), organizationId = g("organizationId"), date = g("date"),
     time = g("time"), venue = g("venue"), participants = g("participants"),
     budget = g("budget"), desc = g("desc"), type = g("type");
   const docName = (body?.docName || "").toString();
   const docUrl = (body?.docUrl || "").toString() || null;
 
-  if (!title || !org || !adviser || !date || !venue || !participants || !desc) {
+  if (!title || !organizationId || !date || !venue || !participants || !desc || !docName || !docUrl) {
     return jsonError(400, "Please complete all required fields.", "MISSING_FIELDS");
   }
+
+  // Event submission is a permission of an assigned student officer, not a
+  // general student capability.  The organization/adviser are always taken
+  // from the server record, never from form fields supplied by the browser.
+  const representative = await prisma.organizationRepresentative.findFirst({
+    where: {
+      organizationId,
+      studentId: auth.studentId || "",
+      active: true,
+      organization: { active: true },
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+    include: { organization: true },
+  });
+  if (!representative) return jsonError(403, "Only an active organization representative may submit an event request.", "NOT_ORG_REPRESENTATIVE");
+
+  const org = representative.organization.name;
+  const adviser = representative.organization.adviserName;
+  const activeRequest = await prisma.eventRequest.findFirst({
+    where: { organizationId, date, status: { in: ["Pending", "Under Review", "Approved", "Needs Revision"] } },
+    select: { id: true },
+  });
+  if (activeRequest) return jsonError(409, "This organization already has an active event request on that date.", "DUPLICATE_ORGANIZATION_DATE");
 
   const created = await prisma.eventRequest.create({
     data: {
       id: genId("EVT"),
       sn: auth.studentId || "",
       name: auth.name,
-      title, org, adviser, date, time, venue, participants, budget, desc, type,
+      title, org, organizationId, adviser, date, time, venue, participants, budget, desc, type,
       docName, docUrl,
       status: "Pending",
       history: [{ ts: fnow(), status: "Pending", by: auth.name, note: "" }],
