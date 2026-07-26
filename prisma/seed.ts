@@ -160,7 +160,7 @@ async function main() {
         { id: "FAQ-SEED1", cat: "Document Requests", q: "How long does a document request take to process?", a: "Most documents (Excuse Slip, COE) take 3–5 working days. TOR may take up to 10 working days depending on records." },
         { id: "FAQ-SEED2", cat: "Document Requests", q: "How will I know my document is ready?", a: 'You will receive an email notification and your request status in the portal will change to "Ready to Claim."' },
         { id: "FAQ-SEED3", cat: "Student ID", q: "What do I need to bring when claiming my ID?", a: "Bring one valid ID and your QR code/reference number from this portal." },
-        { id: "FAQ-SEED4", cat: "Student ID", q: "How much is an ID replacement?", a: "Pay the replacement fee at the cashier first, then upload your Official Receipt (OR) in the ID Application module." },
+        { id: "FAQ-SEED4", cat: "Student ID", q: "Is there a payment for a lost ID replacement?", a: "No payment is required for a lost ID replacement. Upload your signed Affidavit of Loss in the ID Application module." },
         { id: "FAQ-SEED5", cat: "Events", q: "How early should our org file an event request?", a: "At least 10 working days before the event date, with your adviser's endorsement attached." },
         { id: "FAQ-SEED6", cat: "General", q: "What are the SSO office hours?", a: "Monday to Friday, 8:00 AM – 5:00 PM (no noon break)." },
       ],

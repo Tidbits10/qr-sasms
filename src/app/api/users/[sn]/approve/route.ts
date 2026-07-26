@@ -17,7 +17,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { sn: string
   if (!user) return NextResponse.json({ error: "Account not found." }, { status: 404 });
 
   if (approve) {
-    await prisma.user.update({ where: { id: user.id }, data: { approved: true } });
+    // updateMany makes approval idempotent even if an admin double-clicks or
+    // two requests arrive at nearly the same time. Only the first transition
+    // from false to true may create an email and bell notification.
+    const approval = await prisma.user.updateMany({ where: { id: user.id, approved: false }, data: { approved: true } });
+    if (!approval.count) return NextResponse.json({ ok: true, alreadyApproved: true });
     await addAudit("INFO", `Account ${sn} (${user.name}) approved by ${auth.name}.`);
     await notifyStudentByEmail({
       studentId: sn,

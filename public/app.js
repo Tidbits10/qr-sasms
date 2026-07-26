@@ -251,6 +251,36 @@ async function handleRegister() {
   setTimeout(() => goTo("page-login"), 1200);
 }
 
+// Login and registration pages stay mounted while the application switches
+// screens. Clear their DOM state explicitly so credentials and unfinished
+// registration details never appear when a visitor returns to either page.
+function clearLoginForm() {
+  ["loginUser", "loginPass"].forEach((id) => {
+    const field = document.getElementById(id);
+    if (field) { field.value = ""; field.classList.remove("error"); }
+  });
+  ["loginUserErr", "loginPassErr"].forEach((id) => document.getElementById(id)?.classList.remove("show"));
+  const remember = document.querySelector('#page-login input[type="checkbox"]');
+  if (remember) remember.checked = false;
+}
+
+function clearRegisterForm() {
+  ["regFirst", "regLast", "regStudNum", "regEmail", "regPass"].forEach((id) => {
+    const field = document.getElementById(id);
+    if (field) { field.value = ""; field.style.borderColor = ""; }
+  });
+  ["regCourse", "regYear"].forEach((id) => {
+    const field = document.getElementById(id);
+    if (field) field.selectedIndex = 0;
+  });
+  clearRegError();
+  const helper = document.getElementById("studNumHelper");
+  if (helper) helper.innerHTML = '<i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Format: 2024-00000-SP-0';
+  checkStrength("");
+  const button = document.getElementById("registerSubmitBtn");
+  if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>CREATE ACCOUNT'; }
+}
+
 /* ──────────────────────────────────────────
    NAVIGATION
 ──────────────────────────────────────────── */
@@ -273,6 +303,10 @@ async function goTo(pageId) {
     if (barChartInst) { try { barChartInst.destroy(); } catch (e) {} barChartInst = null; }
   }
   prevPage = document.querySelector(".page.active")?.id;
+  if (prevPage === "page-login" && pageId !== "page-login") clearLoginForm();
+  if (prevPage === "page-register" && pageId !== "page-register") clearRegisterForm();
+  if (pageId === "page-login" && prevPage !== "page-login") clearLoginForm();
+  if (pageId === "page-register" && prevPage !== "page-register") clearRegisterForm();
   window.__qrsPageScroll = window.__qrsPageScroll || {};
   if (prevPage && prevPage !== pageId) window.__qrsPageScroll[prevPage] = window.scrollY;
   document.querySelectorAll(".page").forEach((p) => { p.classList.remove("active"); p.style.display = "none"; });
@@ -1357,7 +1391,7 @@ async function requestProfileEdit() {
   const current = await api("/api/profile"); if (!current.ok) return showToast("❌ Could not load profile.", "rgba(155,22,22,.85)");
   if (current.data.pending) return showToast("⚠️ Your profile update is already awaiting staff verification.", "rgba(180,130,0,.85)");
   const u = current.data.user || session;
-  openAppModal({ title: "Update Profile", subtitle: "Your changes will be reviewed by Student Services before they are applied.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Full name", "profileName", u.name)}${modalField("Email", "profileEmail", u.email)}${modalField("Course", "profileCourse", u.course || "")}${modalField("Year level", "profileYear", u.year || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="saveProfileEdit()"><i class="fa-solid fa-paper-plane"></i> Submit for review</button></div>` });
+  openAppModal({ title: "Update Profile", subtitle: "Your changes will be reviewed by Student Services before they are applied.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Full name", "profileName", u.name)}${modalField("Email", "profileEmail", u.email)}${modalField("Course", "profileCourse", u.course || "")}${modalField("Year level", "profileYear", u.year || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="openSettingsMenu()">Back</button><button class="btn-maroon" onclick="saveProfileEdit()"><i class="fa-solid fa-paper-plane"></i> Submit for review</button></div>` });
 }
 
 async function saveProfileEdit() {
@@ -1588,9 +1622,10 @@ function renderIdApp() {
             <select id="idType" class="glass-input" onchange="toggleAffidavitField()"><option>New ID</option><option>ID Replacement — Lost</option><option>ID Replacement — Damaged</option></select></div>
           <div><span class="input-label">Reason / Details</span>
             <textarea id="idReason" class="glass-input" rows="3" placeholder="e.g., Lost my ID on campus last week…"></textarea></div>
-          <div><span class="input-label">Official Receipt (OR) — required</span>
+          <div id="idReceiptField"><span class="input-label">Official Receipt (OR) — required for New ID and damaged replacement</span>
             <input id="idOr" type="file" accept=".jpg,.jpeg,.png,.pdf" class="glass-input" style="padding:9px;">
             <div style="font-size:10px;color:rgba(30,5,5,.55);margin-top:4px;">Pay at the cashier first, then upload a photo/scan of your OR (JPG, PNG, or PDF, max 1.5 MB).</div></div>
+          <div id="lostIdNoFee" class="info-box" style="display:none;font-size:11px;padding:10px 12px;"><i class="fa-solid fa-circle-info" style="color:#D4A017;margin-right:5px;"></i>Lost ID replacement has no payment. Upload the Affidavit of Loss below.</div>
           <div id="affidavitField" style="display:none;"><span class="input-label">Affidavit of Loss — required for a lost ID</span>
             <input id="idAffidavit" type="file" accept=".jpg,.jpeg,.png,.pdf" class="glass-input" style="padding:9px;">
             <div style="font-size:10px;color:rgba(30,5,5,.55);margin-top:4px;">Upload the signed Affidavit of Loss (JPG, PNG, or PDF, max 1.5 MB).</div></div>
@@ -1616,10 +1651,12 @@ async function idSubmit() {
   const orInput = document.getElementById("idOr");
   const affidavitInput = document.getElementById("idAffidavit");
   if (!reason) { showToast("⚠️ Please provide the reason/details.", "rgba(180,130,0,.85)"); return; }
-  if (!orInput.files.length) { showToast("⚠️ Official Receipt upload is required.", "rgba(180,130,0,.85)"); return; }
-  const uploaded = await uploadFile(orInput);
-  if (uploaded === false) return;
-  if (!uploaded.url) { showToast("⚠️ Official Receipt upload is required.", "rgba(180,130,0,.85)"); return; }
+  let uploaded = { fileName: "", url: "" };
+  if (type !== "ID Replacement — Lost") {
+    if (!orInput.files.length) { showToast("⚠️ Official Receipt upload is required.", "rgba(180,130,0,.85)"); return; }
+    uploaded = await uploadFile(orInput);
+    if (uploaded === false || !uploaded.url) { showToast("⚠️ Official Receipt upload is required.", "rgba(180,130,0,.85)"); return; }
+  }
   let affidavit = { fileName: "", url: "" };
   if (type === "ID Replacement — Lost") {
     if (!affidavitInput.files.length) { showToast("⚠️ An Affidavit of Loss is required for a lost ID.", "rgba(180,130,0,.85)"); return; }
@@ -1628,12 +1665,17 @@ async function idSubmit() {
   }
   const { ok, error } = await api("/api/modules/idapps", { method: "POST", body: { type, reason, orName: uploaded.fileName, orUrl: uploaded.url, affidavitName: affidavit.fileName, affidavitUrl: affidavit.url } });
   if (!ok) { showToast(`❌ ${error || "Could not submit."}`, "rgba(155,22,22,.85)"); return; }
-  showToast("✅ Application submitted with OR.");
+  showToast(type === "ID Replacement — Lost" ? "✅ Lost ID application submitted." : "✅ Application submitted with OR.");
   await loadModule("idapps"); renderIdApp();
 }
 function toggleAffidavitField() {
   const field = document.getElementById("affidavitField");
-  if (field) field.style.display = document.getElementById("idType").value === "ID Replacement — Lost" ? "block" : "none";
+  const isLost = document.getElementById("idType").value === "ID Replacement — Lost";
+  if (field) field.style.display = isLost ? "block" : "none";
+  const receipt = document.getElementById("idReceiptField");
+  if (receipt) receipt.style.display = isLost ? "none" : "block";
+  const noFee = document.getElementById("lostIdNoFee");
+  if (noFee) noFee.style.display = isLost ? "block" : "none";
 }
 async function idUpdate(id) {
   const st = document.getElementById("idst-" + id).value;
