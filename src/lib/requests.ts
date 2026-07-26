@@ -8,7 +8,7 @@ export const DOC_LABELS: Record<string, string> = {
   coe: "Certificate of Enrollment",
   tor: "Transcript of Records (TOR)",
   auth: "Authentication",
-  excuse slip: "Excuse Slip Copy",
+  excuseslip: "Excuse Slip Copy",
   other: "Other",
   ev: "Enrollment Verification",
 };
