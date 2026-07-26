@@ -2833,11 +2833,22 @@ async function startScanner() {
   if (!reader) return showToast("Scanner view is unavailable.", "rgba(155,22,22,.85)");
   try {
     qrScanner = qrScanner || new Html5Qrcode("reader");
-    await qrScanner.start({ facingMode: { exact: "environment" } }, { fps: 10, qrbox: { width: 220, height: 220 } }, async (decodedText) => {
+    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+    const onScan = async (decodedText) => {
       if (!qrScannerRunning) return;
       await stopScanner();
       await completeScannedQr(decodedText);
-    }, () => {});
+    };
+    // Phones prefer the rear camera. Desktop/laptop cameras commonly have no
+    // `environment` device, so fall back to the first real camera instead of
+    // rejecting an already-granted browser permission.
+    try {
+      await qrScanner.start({ facingMode: "environment" }, config, onScan, () => {});
+    } catch (preferredCameraError) {
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras.length) throw preferredCameraError;
+      await qrScanner.start(cameras[0].id, config, onScan, () => {});
+    }
     qrScannerRunning = true;
     document.getElementById("scanBtn")?.style && (document.getElementById("scanBtn").style.display = "none");
     document.getElementById("stopBtn")?.style && (document.getElementById("stopBtn").style.display = "inline-block");
