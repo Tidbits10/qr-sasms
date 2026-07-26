@@ -123,12 +123,12 @@ async function main() {
 
   // ── Appointment queue (today) ─────────────────────────────────────────
   const queue: Array<{ code: string; studentId: string; name: string; time: string; served: boolean }> = [
-    { code: "Q-004", studentId: "2024-00091-SP-0", name: "Maria Santos", time: "8:00 AM", served: true },
-    { code: "Q-005", studentId: "2024-00102-SP-0", name: "Pedro Reyes", time: "8:30 AM", served: true },
-    { code: "Q-006", studentId: "2024-00115-SP-0", name: "Ana Flores", time: "9:00 AM", served: true },
-    { code: "Q-007", studentId: "2024-00123-SP-0", name: "Juan dela Cruz", time: "9:30 AM", served: false },
-    { code: "Q-008", studentId: "2024-00134-SP-0", name: "Liza Manguba", time: "10:00 AM", served: false },
-    { code: "Q-009", studentId: "2024-00145-SP-0", name: "Rico Aguinaldo", time: "10:30 AM", served: false },
+    { code: "APT-004", studentId: "2024-00091-SP-0", name: "Maria Santos", time: "8:00 AM", served: true },
+    { code: "APT-005", studentId: "2024-00102-SP-0", name: "Pedro Reyes", time: "8:30 AM", served: true },
+    { code: "APT-006", studentId: "2024-00115-SP-0", name: "Ana Flores", time: "9:00 AM", served: true },
+    { code: "APT-007", studentId: "2024-00123-SP-0", name: "Juan dela Cruz", time: "9:30 AM", served: false },
+    { code: "APT-008", studentId: "2024-00134-SP-0", name: "Liza Manguba", time: "10:00 AM", served: false },
+    { code: "APT-009", studentId: "2024-00145-SP-0", name: "Rico Aguinaldo", time: "10:30 AM", served: false },
   ];
   const todayLabel = new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date());
   for (const q of queue) {
