@@ -1,6 +1,5 @@
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
+import { prisma } from "@/lib/prisma";
 
 const ALLOWED_EXT = ["jpg", "jpeg", "png", "pdf", "doc", "docx"];
 const MAX_BYTES = 1536 * 1024; // 1.5 MB, matches the original client-side cap
@@ -17,7 +16,7 @@ export class UploadError extends Error {}
  * like the base64 data-URIs the original frontend generated client-side —
  * except this is a real file on disk instead of bloating the database.
  */
-export async function saveUploadedFile(file: File): Promise<{ url: string; fileName: string }> {
+export async function saveUploadedFile(file: File, uploadedBy: string): Promise<{ url: string; fileName: string }> {
   const originalName = file.name || "upload";
   const ext = (originalName.split(".").pop() || "").toLowerCase();
   if (!ALLOWED_EXT.includes(ext)) {
@@ -30,15 +29,10 @@ export async function saveUploadedFile(file: File): Promise<{ url: string; fileN
     throw new UploadError("File too large (max 1.5 MB).");
   }
 
-  const uploadDir = process.env.UPLOAD_DIR
-    ? path.resolve(process.env.UPLOAD_DIR)
-    : path.join(process.cwd(), "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   const safeBase = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
   const storedName = `${randomUUID()}-${safeBase}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, storedName), buffer);
+  await prisma.uploadedFile.create({ data: { storedName, originalName, mimeType: file.type || "application/octet-stream", bytes: buffer, uploadedBy } });
 
   return { url: `/api/uploads/${encodeURIComponent(storedName)}`, fileName: originalName };
 }

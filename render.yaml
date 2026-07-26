@@ -3,7 +3,7 @@ services:
     runtime: node
     name: qr-sasms
     plan: free
-    buildCommand: npm ci && npx prisma db push && npx prisma db seed && npm run build
+    buildCommand: npm ci && npx prisma db push && npm run build
     startCommand: npm start
     healthCheckPath: /
     envVars:

@@ -215,6 +215,18 @@ model EventRequest {
   @@index([organizationId, date])
 }
 
+model UploadedFile {
+  id           String   @id @default(uuid())
+  storedName   String   @unique
+  originalName String
+  mimeType     String
+  bytes        Bytes
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedBy])
+}
+
 model Organization {
   id          String   @id @default(uuid())
   name        String   @unique

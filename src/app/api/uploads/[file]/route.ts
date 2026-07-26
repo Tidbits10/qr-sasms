@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { requireSession, jsonError } from "@/lib/http";
@@ -16,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { file: strin
   if (!file || path.basename(file) !== file) return jsonError(400, "Invalid file.", "INVALID_FILE");
   const url = `/api/uploads/${encodeURIComponent(file)}`;
 
-  if (auth.role !== "admin") {
+  if (auth.role !== "admin" && auth.role !== "super_admin") {
     const sn = auth.studentId || "";
     const [idApp, event, complaint, form] = await Promise.all([
       prisma.idApplication.findFirst({ where: { sn, OR: [{ orUrl: url }, { affidavitUrl: url }] }, select: { id: true } }),
@@ -27,12 +26,8 @@ export async function GET(_req: NextRequest, { params }: { params: { file: strin
     if (!idApp && !event && !complaint && !form) return jsonError(403, "You do not have access to this file.", "FORBIDDEN");
   }
 
-  const uploadDir = process.env.UPLOAD_DIR ? path.resolve(process.env.UPLOAD_DIR) : path.join(process.cwd(), "uploads");
-  try {
-    const data = await readFile(path.join(uploadDir, file));
-    const ext = file.split(".").pop()?.toLowerCase() || "";
-    return new NextResponse(data, { headers: { "Content-Type": MIME[ext] || "application/octet-stream", "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store" } });
-  } catch {
-    return jsonError(404, "File not found.", "FILE_NOT_FOUND");
-  }
+  const stored = await prisma.uploadedFile.findUnique({ where: { storedName: file } });
+  if (!stored) return jsonError(404, "File not found.", "FILE_NOT_FOUND");
+  const ext = file.split(".").pop()?.toLowerCase() || "";
+  return new NextResponse(new Uint8Array(stored.bytes), { headers: { "Content-Type": stored.mimeType || MIME[ext] || "application/octet-stream", "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store" } });
 }

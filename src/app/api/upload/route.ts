@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { url, fileName } = await saveUploadedFile(file);
+    const { url, fileName } = await saveUploadedFile(file, auth.uid);
     return NextResponse.json({ url, fileName });
   } catch (err) {
     if (err instanceof UploadError) {
