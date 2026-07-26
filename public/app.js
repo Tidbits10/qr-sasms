@@ -80,6 +80,11 @@ let PENDING_ACCOUNTS = []; // accounts awaiting admin approval
 let MASTERLIST_COUNT = 0;
 let MOD = { referrals: [], idapps: [], bulletins: [], tickets: [], faqs: [], events2: [], complaints: [], forms: [], memos: [] };
 let ADMIN_ACTIVITY = null;
+const REQUESTS_PER_PAGE = 7;
+let adminRequestPage = 1;
+let studentRequestPage = 1;
+let lastAdminTableFilterKey = "";
+let lastStudentTableFilterKey = "";
 
 async function loadRequests() { const r = await api("/api/requests"); DB = r.ok ? r.data : []; }
 async function loadAdminActivity() { const r = await api("/api/admin/activity"); ADMIN_ACTIVITY = r.ok ? r.data : null; }
@@ -421,14 +426,23 @@ function renderStudentTable(query = "") {
     const matchQuery = !q || r.doc.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || r.status.toLowerCase().includes(q) || r.purpose.toLowerCase().includes(q);
     return matchQuery && (!statusFilter || r.status === statusFilter);
   });
+  const filterKey = `${q}|${statusFilter}`;
+  if (filterKey !== lastStudentTableFilterKey) {
+    studentRequestPage = 1;
+    lastStudentTableFilterKey = filterKey;
+  }
 
   const tbody = document.getElementById("studentTable");
   const empty = document.getElementById("studentTableEmpty");
+  const pagination = document.getElementById("studentTablePagination");
 
-  if (filtered.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; return; }
+  if (filtered.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; if (pagination) pagination.innerHTML = ""; return; }
   empty.style.display = "none";
+  const totalPages = Math.ceil(filtered.length / REQUESTS_PER_PAGE);
+  studentRequestPage = Math.min(studentRequestPage, totalPages);
+  const pageRows = filtered.slice((studentRequestPage - 1) * REQUESTS_PER_PAGE, studentRequestPage * REQUESTS_PER_PAGE);
 
-  tbody.innerHTML = filtered.map((r) => {
+  tbody.innerHTML = pageRows.map((r) => {
     const bc = badgeClass(r.status);
     const canQR = r.status === "Ready to Claim";
     let actionBtn;
@@ -453,6 +467,27 @@ function renderStudentTable(query = "") {
       <td style="text-align:right;">${actionBtn}</td>
     </tr>`;
   }).join("");
+  renderTablePagination(pagination, studentRequestPage, totalPages, filtered.length, "setStudentRequestPage");
+}
+
+function renderTablePagination(container, currentPage, totalPages, totalRows, goToFunction) {
+  if (!container) return;
+  if (totalPages <= 1) { container.innerHTML = ""; return; }
+  const start = (currentPage - 1) * REQUESTS_PER_PAGE + 1;
+  const end = Math.min(currentPage * REQUESTS_PER_PAGE, totalRows);
+  container.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 2px 0;font-size:11px;color:rgba(30,5,5,.62);">
+    <span>Showing ${start}–${end} of ${totalRows}</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button onclick="${goToFunction}(${currentPage - 1})" ${currentPage === 1 ? "disabled" : ""} class="btn-ghost" style="padding:5px 10px;font-size:11px;${currentPage === 1 ? "opacity:.45;cursor:not-allowed;" : ""}"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+      <span style="font-weight:800;color:#8B1A1A;white-space:nowrap;">${currentPage} / ${totalPages}</span>
+      <button onclick="${goToFunction}(${currentPage + 1})" ${currentPage === totalPages ? "disabled" : ""} class="btn-ghost" style="padding:5px 10px;font-size:11px;${currentPage === totalPages ? "opacity:.45;cursor:not-allowed;" : ""}">Next <i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  </div>`;
+}
+
+function setStudentRequestPage(page) {
+  studentRequestPage = Math.max(1, page);
+  renderStudentTable(document.getElementById("studentSearch")?.value || "");
 }
 
 async function reuploadRequest(id) {
@@ -657,14 +692,23 @@ function renderAdminTable() {
     const matchQ = !q || r.studentName.toLowerCase().includes(q) || r.studentId.toLowerCase().includes(q) || r.doc.toLowerCase().includes(q) || r.id.toLowerCase().includes(q) || r.status.toLowerCase().includes(q);
     return matchStatus && matchDoc && matchQ;
   });
+  const filterKey = `${q}|${filter}|${docF}|${sortMode}`;
+  if (filterKey !== lastAdminTableFilterKey) {
+    adminRequestPage = 1;
+    lastAdminTableFilterKey = filterKey;
+  }
 
   const tbody = document.getElementById("adminTable");
   const empty = document.getElementById("adminTableEmpty");
+  const pagination = document.getElementById("adminTablePagination");
 
-  if (filtered.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; return; }
+  if (filtered.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; if (pagination) pagination.innerHTML = ""; return; }
   empty.style.display = "none";
+  const totalPages = Math.ceil(filtered.length / REQUESTS_PER_PAGE);
+  adminRequestPage = Math.min(adminRequestPage, totalPages);
+  const pageRows = filtered.slice((adminRequestPage - 1) * REQUESTS_PER_PAGE, adminRequestPage * REQUESTS_PER_PAGE);
 
-  tbody.innerHTML = filtered.map((r) => {
+  tbody.innerHTML = pageRows.map((r) => {
     const bc = badgeClass(r.status);
     const eyeBtn = `<button onclick="openAdminDetail('${r.id}')" class="btn-ghost" style="padding:5px 12px;font-size:11px;border-radius:9px;"><i class="fa-solid fa-eye"></i></button>`;
     let actions;
@@ -700,6 +744,12 @@ function renderAdminTable() {
       <td style="text-align:right;">${actions}</td>
     </tr>`;
   }).join("");
+  renderTablePagination(pagination, adminRequestPage, totalPages, filtered.length, "setAdminRequestPage");
+}
+
+function setAdminRequestPage(page) {
+  adminRequestPage = Math.max(1, page);
+  renderAdminTable();
 }
 
 // Approve/reject/etc. — calls the API, reloads fresh state, re-renders.
