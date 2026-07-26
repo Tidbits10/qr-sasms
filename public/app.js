@@ -217,6 +217,8 @@ function showRegError(msg) {
 function clearRegError() { const el = document.getElementById("regError"); if (el) el.style.display = "none"; }
 
 async function handleRegister() {
+  const submitButton = document.getElementById("registerSubmitBtn");
+  if (submitButton?.disabled) return;
   clearRegError();
   const first = document.getElementById("regFirst").value.trim();
   const last = document.getElementById("regLast").value.trim();
@@ -235,14 +237,17 @@ async function handleRegister() {
     return;
   }
 
+  if (submitButton) { submitButton.disabled = true; submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i>CREATING ACCOUNT…'; }
   const { ok, data } = await api("/api/auth/register", { method: "POST", body: { first, last, sn, email, password: pass, course, year } });
   if (!ok) {
+    if (submitButton) { submitButton.disabled = false; submitButton.innerHTML = '<i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>CREATE ACCOUNT'; }
     showRegError((data && data.error) || "Could not create your account.");
     return;
   }
 
   showToast("✅ Account created! It will be reviewed by the SSO — you can sign in once approved.");
   ["regFirst", "regLast", "regStudNum", "regEmail", "regPass"].forEach((id) => { const e = document.getElementById(id); if (e) e.value = ""; });
+  if (submitButton) { submitButton.disabled = false; submitButton.innerHTML = '<i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>CREATE ACCOUNT'; }
   setTimeout(() => goTo("page-login"), 1200);
 }
 

@@ -74,28 +74,26 @@ export async function POST(req: NextRequest) {
   // 3. Notify Admin na may bagong kailangang i-approve
   await addNotification("admin", "Account Approval Needed", `${name} (${sn}) registered and is awaiting your approval.`);
 
-  // 4. Send/Simulate Email and Log to EmailLog table
-  try {
-    const mailResult = await sendMail({
-      to: email,
-      subject: "Account Registration Pending - PUP San Pedro SSO",
-      text: `Hello ${name}, your account has been successfully registered and is currently awaiting approval from the SSO Admin. We will notify you once it's approved.`,
-    });
-
-    await prisma.emailLog.create({
-      data: {
+  // Email delivery must never hold up registration. SMTP can be slow on a
+  // hosted service, so create the account and return first; the email result
+  // is still recorded in the background for staff monitoring.
+  void (async () => {
+    try {
+      const mailResult = await sendMail({
         to: email,
-        name: name,
-        ref: "REG-" + account.id,
-        doc: "Account Registration",
-        status: mailResult.ok ? "Success" : "Failed",
-        mode: mailResult.mode, // "SENT", "SIMULATED", o "FAILED"
-        error: "error" in mailResult ? mailResult.error : null,
-      },
-    });
-  } catch (mailError) {
-    console.error("Failed to process registration email:", mailError);
-  }
-
+        subject: "Account Registration Pending - PUP San Pedro SSO",
+        text: `Hello ${name}, your account has been successfully registered and is currently awaiting approval from the SSO Admin. We will notify you once it's approved.`,
+      });
+      await prisma.emailLog.create({
+        data: {
+          to: email, name, ref: "REG-" + account.id, doc: "Account Registration",
+          status: mailResult.ok ? "Success" : "Failed", mode: mailResult.mode,
+          error: "error" in mailResult ? mailResult.error : null,
+        },
+      });
+    } catch (mailError) {
+      console.error("Failed to process registration email:", mailError);
+    }
+  })();
   return NextResponse.json({ ok: true, id: account.id });
 }
