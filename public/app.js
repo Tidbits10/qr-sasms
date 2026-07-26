@@ -280,7 +280,7 @@ async function goTo(pageId) {
 
   // Preload whatever data this page needs, then render (mirrors the
   // original's synchronous render-from-cache functions below).
-  if (pageId === "page-student") { await loadRequests(); renderStudentPage(); }
+  if (pageId === "page-student") { await Promise.all([loadRequests(), loadModule("events2")]); renderStudentPage(); }
   if (pageId === "page-admin") {
     await Promise.all([loadRequests(), loadQueueData(), loadAuditLog(), loadEmailLog(), loadEmailStatus(), loadPendingAccounts(), refreshMasterlistStatus(), loadAdminActivity()]);
     renderAdminPage();
@@ -403,6 +403,14 @@ function renderStudentPage() {
   const statusEl = document.getElementById("studentStatusFilter");
   if (statusEl) statusEl.value = "";
   renderStudentTable("");
+  renderStudentEventStatus();
+}
+
+function renderStudentEventStatus() {
+  const el = document.getElementById("studentEventStatusCard");
+  if (!el || !session) return;
+  const mine = (MOD.events2 || []).filter((event) => event.sn === session.id).slice().reverse();
+  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div><button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button></div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? mine.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>`;
 }
 
 async function renderStudentAppointment() {
@@ -1156,7 +1164,6 @@ const STUDENT_SERVICES = [
   { page: "page-idapp", icon: "fa-id-card", t: "ID Application", d: "New ID or replacement (OR required)" },
   { page: "page-helpdesk", icon: "fa-robot", t: "Student Service Help", d: "Ask the FAQ chatbot" },
   { page: "page-complaint", icon: "fa-shield-heart", t: "Complaints", d: "Confidential reports & concerns" },
-  { page: "page-events2", icon: "fa-calendar-star,fa-calendar-check", t: "Event Request", d: "For student organizations" },
   { page: "page-bulletin", icon: "fa-bullhorn", t: "Student Bulletin", d: "Announcements & advisories" },
   { page: "page-faq", icon: "fa-circle-question", t: "FAQ", d: "Frequently asked questions" },
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Downloadable Forms", d: "Official OSS forms" },
@@ -2800,7 +2807,7 @@ async function refreshLiveData() {
     await Promise.all([loadRequests(), loadQueueData(), loadAdminActivity(), loadPendingAccounts(), loadAuditLog(), loadEmailLog()]);
     renderAdminPage();
   } else if (page === "page-student") {
-    await loadRequests(); renderStudentPage();
+    await Promise.all([loadRequests(), loadModule("events2")]); renderStudentPage();
   } else if (page === "page-scanner") {
     await loadRequests();
   }
