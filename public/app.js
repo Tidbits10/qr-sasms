@@ -1260,7 +1260,7 @@ async function manageOrganizations() {
   }).join("") || emptyState("No organizations registered yet.");
   openAppModal({ title: "Organizations & Representatives", subtitle: "Only assigned, active student officers may submit Event Requests. Assignments may expire each academic year.", icon: "fa-people-group", wide: true, content: `<div style="max-height:440px;overflow:auto;">${rows}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button>${isSuperAdmin() ? `<button class="btn-maroon" onclick="createOrganization()"><i class="fa-solid fa-plus"></i> Register organization</button>` : ""}</div>` });
 }
-async function createOrganization() {
+async function legacyCreateOrganization() {
   const name = prompt("Organization name:")?.trim(); if (!name) return;
   const adviserName = prompt("Faculty adviser name:")?.trim(); if (!adviserName) return;
   const schoolYear = prompt("Academic year (optional, e.g. 2026–2027):")?.trim() || "";
@@ -1268,9 +1268,33 @@ async function createOrganization() {
   if (!result.ok) return showToast(result.error || "Could not register organization.", "rgba(155,22,22,.85)");
   showToast("Organization registered."); manageOrganizations();
 }
-async function assignOrganizationRep(organizationId, name) {
+async function legacyAssignOrganizationRep(organizationId, name) {
   const studentId = prompt(`Student number of the verified officer for ${name}:`)?.trim(); if (!studentId) return;
   const expiresAt = prompt("Access expiry date (YYYY-MM-DD; leave blank for no expiry):")?.trim() || "";
+  const result = await api("/api/organizations/representatives", { method: "POST", body: { organizationId, studentId, expiresAt } });
+  if (!result.ok) return showToast(result.error || "Could not assign representative.", "rgba(155,22,22,.85)");
+  showToast("Organization representative assigned."); manageOrganizations();
+}
+async function createOrganization() {
+  openAppModal({ title: "Register Organization", subtitle: "Create the organization before assigning verified student officers.", icon: "fa-people-group", content: `<div class="app-modal-grid">${modalField("Organization name", "orgName")}${modalField("Faculty adviser", "orgAdviser")}${modalField("Academic year", "orgSchoolYear", "2026-2027")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="manageOrganizations()">Back</button><button class="btn-maroon" onclick="saveOrganization()"><i class="fa-solid fa-floppy-disk"></i> Register organization</button></div>` });
+}
+async function saveOrganization() {
+  const name = document.getElementById("orgName")?.value.trim(), adviserName = document.getElementById("orgAdviser")?.value.trim(), schoolYear = document.getElementById("orgSchoolYear")?.value.trim() || "";
+  if (!name || !adviserName) return showToast("Organization name and faculty adviser are required.", "rgba(180,130,0,.85)");
+  const result = await api("/api/organizations", { method: "POST", body: { name, adviserName, schoolYear } });
+  if (!result.ok) return showToast(result.error || "Could not register organization.", "rgba(155,22,22,.85)");
+  showToast("Organization registered."); manageOrganizations();
+}
+async function assignOrganizationRep(organizationId, name) {
+  const studentsResult = await api("/api/users/students");
+  if (!studentsResult.ok) return showToast(studentsResult.error || "Could not load students.", "rgba(155,22,22,.85)");
+  const options = (studentsResult.data || []).filter((student) => student.active && student.approved).map((student) => `<option value="${esc(student.studentId)}">${esc(student.name)} — ${esc(student.studentId)}${student.course ? ` · ${esc(student.course)}` : ""}</option>`).join("");
+  openAppModal({ title: "Assign Organization Representative", subtitle: `Select the verified student officer for ${name}. Their Student account remains unchanged.`, icon: "fa-user-check", content: `<div class="app-modal-grid"><div class="app-field" style="grid-column:1/-1;"><label for="orgRepresentativeStudent">Student officer</label><select id="orgRepresentativeStudent" class="glass-input"><option value="">Select approved student account</option>${options}</select></div><div class="app-field"><label for="orgRepresentativeExpiry">Access expires on (optional)</label><input id="orgRepresentativeExpiry" type="date" class="glass-input"></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="manageOrganizations()">Back</button><button class="btn-maroon" onclick="saveOrganizationRepresentative('${organizationId}')"><i class="fa-solid fa-user-plus"></i> Assign representative</button></div>` });
+}
+async function saveOrganizationRepresentative(organizationId) {
+  const studentId = document.getElementById("orgRepresentativeStudent")?.value || "";
+  const expiresAt = document.getElementById("orgRepresentativeExpiry")?.value || "";
+  if (!studentId) return showToast("Select the student officer to assign.", "rgba(180,130,0,.85)");
   const result = await api("/api/organizations/representatives", { method: "POST", body: { organizationId, studentId, expiresAt } });
   if (!result.ok) return showToast(result.error || "Could not assign representative.", "rgba(155,22,22,.85)");
   showToast("Organization representative assigned."); manageOrganizations();

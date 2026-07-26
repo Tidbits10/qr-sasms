@@ -7,7 +7,10 @@ export async function GET() {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
   const orgs = await prisma.organization.findMany({ include: { representatives: { orderBy: { createdAt: "desc" } } }, orderBy: { name: "asc" } });
-  return NextResponse.json(orgs);
+  const studentIds = [...new Set(orgs.flatMap((org) => org.representatives.map((rep) => rep.studentId)))];
+  const students = studentIds.length ? await prisma.user.findMany({ where: { studentId: { in: studentIds } }, select: { studentId: true, name: true } }) : [];
+  const names = new Map(students.map((student) => [student.studentId, student.name]));
+  return NextResponse.json(orgs.map((org) => ({ ...org, representatives: org.representatives.map((rep) => ({ ...rep, studentName: names.get(rep.studentId) || "Unknown student" })) })));
 }
 
 export async function POST(req: NextRequest) {
