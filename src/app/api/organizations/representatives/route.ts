@@ -28,3 +28,14 @@ export async function PATCH(req: NextRequest) {
   await addAudit("WARN", `Organization representative ${id} ${updated.active ? "reactivated" : "revoked"} by ${auth.name}.`);
   return NextResponse.json(updated);
 }
+
+export async function DELETE(req: NextRequest) {
+  const auth = await requireSession(["super_admin"]);
+  if (auth instanceof NextResponse) return auth;
+  const id = new URL(req.url).searchParams.get("id") || "";
+  if (!id) return jsonError(400, "Representative record is required.", "MISSING_FIELDS");
+  const removed = await prisma.organizationRepresentative.delete({ where: { id } }).catch(() => null);
+  if (!removed) return jsonError(404, "Representative assignment not found.", "NOT_FOUND");
+  await addAudit("WARN", `Organization representative ${removed.studentId} permanently removed by ${auth.name}.`);
+  return NextResponse.json({ removed: true });
+}

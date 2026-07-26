@@ -1246,7 +1246,22 @@ function openAppModal({ title, subtitle = "", icon = "fa-circle-info", content =
   modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
   modal.innerHTML = `<div class="modal-box" style="max-width:${wide ? "880px" : "680px"};"><div class="app-modal-head"><div><div class="app-modal-title"><i class="fa-solid ${icon}"></i><span>${esc(title)}</span></div>${subtitle ? `<p class="app-modal-subtitle">${esc(subtitle)}</p>` : ""}</div><button class="app-modal-close" onclick="closeAppModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div><div class="app-modal-body">${content}</div></div>`;
   modal.addEventListener("click", (event) => { if (event.target === modal) closeAppModal(); });
-  document.body.appendChild(modal); return modal;
+  document.body.appendChild(modal);
+  // The organization list is rendered from one compact template. Add the
+  // permanent-remove control beside each existing revoke/reactivate action.
+  if (title === "Organizations & Representatives" && isSuperAdmin()) {
+    const assignments = [...(window.__qrsOrganizationRepresentatives || [])];
+    modal.querySelectorAll("button").forEach((button) => {
+      if (!/^(Revoke|Reactivate)$/.test(button.textContent.trim())) return;
+      const rep = assignments.shift(); if (!rep) return;
+      const remove = document.createElement("button");
+      remove.className = "btn-soft"; remove.textContent = "Remove";
+      remove.style.cssText = "padding:3px 8px;font-size:10px;color:#a11;margin-left:5px;";
+      remove.onclick = () => confirmRemoveOrganizationRep(rep.id, rep.studentId);
+      button.insertAdjacentElement("afterend", remove);
+    });
+  }
+  return modal;
 }
 function modalField(label, id, value = "", extra = "") { return `<div class="app-field ${extra}"><label for="${id}">${esc(label)}</label><input id="${id}" class="glass-input" value="${esc(value)}"></div>`; }
 
@@ -1254,6 +1269,7 @@ async function manageOrganizations() {
   const result = await api("/api/organizations");
   if (!result.ok) return showToast(result.error || "Could not load organizations.", "rgba(155,22,22,.85)");
   const organizations = result.data || [];
+  window.__qrsOrganizationRepresentatives = organizations.flatMap((organization) => organization.representatives || []);
   const rows = organizations.map((org) => {
     const reps = (org.representatives || []).map((rep) => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(139,26,26,.08);font-size:11px;"><span><b>${esc(rep.studentId)}</b> ${rep.active ? "<span style='color:#16803c;'>Active</span>" : "<span style='color:#a11;'>Revoked</span>"}${rep.expiresAt ? ` · until ${new Date(rep.expiresAt).toLocaleDateString()}` : ""}</span><button class="btn-soft" style="padding:3px 8px;font-size:10px;" onclick="setOrganizationRep('${rep.id}',${!rep.active})">${rep.active ? "Revoke" : "Reactivate"}</button></div>`).join("") || `<div style="font-size:11px;color:rgba(30,5,5,.55);padding-top:6px;">No representative assigned.</div>`;
     return `<div class="glass-card" style="padding:13px;margin-bottom:10px;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><div><b style="color:#1a0505;">${esc(org.name)}</b><div style="font-size:11px;color:rgba(30,5,5,.58);margin-top:3px;">Adviser: ${esc(org.adviserName)}${org.schoolYear ? ` · ${esc(org.schoolYear)}` : ""}</div></div><div style="display:flex;gap:6px;"><button class="btn-maroon" style="padding:6px 9px;font-size:11px;" onclick="assignOrganizationRep('${org.id}','${esc(org.name)}')">Assign officer</button>${isSuperAdmin() ? `<button class="btn-soft" style="padding:6px 9px;font-size:11px;" onclick="setOrganizationActive('${org.id}',${!org.active})">${org.active ? "Deactivate" : "Activate"}</button>` : ""}</div></div><div style="margin-top:8px;">${reps}</div></div>`;
@@ -1303,6 +1319,14 @@ async function setOrganizationRep(id, active) {
   const result = await api("/api/organizations/representatives", { method: "PATCH", body: { id, active } });
   if (!result.ok) return showToast(result.error || "Could not update representative.", "rgba(155,22,22,.85)");
   showToast(active ? "Representative reactivated." : "Representative access revoked."); manageOrganizations();
+}
+function confirmRemoveOrganizationRep(id, studentId) {
+  openAppModal({ title: "Remove Representative", subtitle: "This permanently removes the representative assignment. The student's account and request history are not deleted.", icon: "fa-user-minus", content: `<div class="glass-card" style="padding:14px;margin-bottom:16px;"><div style="font-size:13px;font-weight:800;color:#1a0505;">${esc(studentId)}</div><div style="font-size:11px;color:rgba(30,5,5,.65);margin-top:4px;">They will immediately lose Organization Representative access.</div></div><div class="app-modal-actions"><button class="btn-soft" onclick="manageOrganizations()">Cancel</button><button class="btn-maroon" onclick="removeOrganizationRep('${id}')"><i class="fa-solid fa-trash"></i> Remove permanently</button></div>` });
+}
+async function removeOrganizationRep(id) {
+  const result = await api(`/api/organizations/representatives?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!result.ok) return showToast(result.error || "Could not remove representative.", "rgba(155,22,22,.85)");
+  showToast("Representative assignment removed."); manageOrganizations();
 }
 async function setOrganizationActive(id, active) {
   if (!confirm(`${active ? "Activate" : "Deactivate"} this organization?`)) return;
