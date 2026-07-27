@@ -17,7 +17,8 @@ function validAppointmentDate(label: string) {
   const normalized = parsed.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   if (normalized !== label) return false;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 90);
+  // Students can choose only the current month or the immediately next month.
+  const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
   return parsed >= today && parsed <= maxDate && parsed.getDay() !== 0 && parsed.getDay() !== 6;
 }
 
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
   const dateLabel = (body?.dateLabel || "").toString();
   const time = (body?.time || "").toString();
   if (!dateLabel || !time) return jsonError(400, "Please choose a date and time slot.", "MISSING_FIELDS");
-  if (!validAppointmentDate(dateLabel)) return jsonError(400, "Please choose a future weekday within the next 90 days.", "INVALID_APPOINTMENT_DATE");
+  if (!validAppointmentDate(dateLabel)) return jsonError(400, "Please choose a future weekday within the current or next month.", "INVALID_APPOINTMENT_DATE");
   const settings = await queueSettings();
   if (!settings.hours.includes(time)) return jsonError(400, "Please choose a valid business-hours time slot.", "INVALID_TIME_SLOT");
   if (settings.holidays.includes(dateLabel)) return jsonError(400, "The SSO is closed on the selected date.", "HOLIDAY");

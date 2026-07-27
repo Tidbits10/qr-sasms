@@ -10,7 +10,7 @@ function validDate(label: string) {
   const normalized = date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   if (normalized !== label) return false;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 90);
+  const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
   return date >= today && date <= maxDate && date.getDay() !== 0 && date.getDay() !== 6;
 }
 

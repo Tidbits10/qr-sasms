@@ -121,7 +121,7 @@ async function loadRegistrationCourses() {
   select.innerHTML = courses.map((course) => `<option value="${esc(course)}">${esc(course)}</option>`).join("");
 }
 
-const DOC_LABELS = { gmc: "Excuse Slip", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other" };
+const DOC_LABELS = { gmc: "Excuse Slip", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other" };
 const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
 const DOC_REQUIREMENTS = {
   gmc: ["Valid PUP student ID", "Clear purpose for the request"],
@@ -136,8 +136,9 @@ let session = null; // { id, email, name, role, course, year }
 let copies = 1;
 let selectedDate = null;
 let selectedSlot = null;
-const appointmentCalendarMonth = new Date().getMonth();
-const appointmentCalendarYear = new Date().getFullYear();
+const appointmentCalendarStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let appointmentCalendarMonth = appointmentCalendarStart.getMonth();
+let appointmentCalendarYear = appointmentCalendarStart.getFullYear();
 const appointmentDateLabel = (day) => new Date(appointmentCalendarYear, appointmentCalendarMonth, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 let prevPage = null;
 let appointmentAvailability = { bookedTimes: [], myAppointment: null };
@@ -999,7 +1000,7 @@ function renderCharts() {
 
   const docCounts = {};
   DB.forEach((r) => { docCounts[r.docKey] = (docCounts[r.docKey] || 0) + 1; });
-  const barLabels = ["gmc", "coe", "tor", "auth", "Excuse Slip"];
+  const barLabels = ["gmc", "auth", "other", "Excuse Slip"];
   const barData = barLabels.map((k) => docCounts[k] || 0);
   const bCtx = document.getElementById("barChart");
   if (bCtx) {
@@ -1010,7 +1011,7 @@ function renderCharts() {
     if (!barChartInst) {
       barChartInst = new Chart(bCtx, {
         type: "bar",
-        data: { labels: ["GMC", "COE", "TOR", "Auth", "Excuse Slip"], datasets: [{ data: barData, backgroundColor: "#8B1A1A", borderRadius: 4 }] },
+        data: { labels: ["Excuse Slip", "Authentication", "Other", "Excuse Slip Copy"], datasets: [{ data: barData, backgroundColor: "#8B1A1A", borderRadius: 4 }] },
         options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: "rgba(80,20,20,.55)", font: { size: 10, family: "Inter" } }, grid: { display: false } } } },
       });
     }
@@ -1036,7 +1037,11 @@ function buildCalendar() {
   const first = new Date(year, month, 1).getDay();
   const total = new Date(year, month + 1, 0).getDate();
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  let html = `<div style="text-align:center;margin-bottom:12px;font-size:13px;font-weight:800;color:#fff;">${new Date(year, month, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div>
+  const calendarMonth = new Date(year, month, 1);
+  const atStart = year === appointmentCalendarStart.getFullYear() && month === appointmentCalendarStart.getMonth();
+  const maxMonth = new Date(appointmentCalendarStart.getFullYear(), appointmentCalendarStart.getMonth() + 1, 1);
+  const atEnd = year === maxMonth.getFullYear() && month === maxMonth.getMonth();
+  let html = `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;"><button type="button" class="btn-ghost" onclick="changeAppointmentMonth(-1)" ${atStart ? "disabled" : ""} style="width:32px;height:32px;padding:0;border-radius:10px;" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button><div style="text-align:center;font-size:15px;font-weight:900;color:#4a1515;letter-spacing:.01em;">${calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</div><button type="button" class="btn-ghost" onclick="changeAppointmentMonth(1)" ${atEnd ? "disabled" : ""} style="width:32px;height:32px;padding:0;border-radius:10px;" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button></div>
   <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px;">
     ${days.map((d) => `<div style="font-size:10px;font-weight:700;color:rgba(30,5,5,.55);padding:4px 0;">${d}</div>`).join("")}
   </div>
@@ -1049,6 +1054,20 @@ function buildCalendar() {
     else html += `<div class="cal-day-na">${d}</div>`;
   }
   container.innerHTML = html + "</div>";
+}
+function changeAppointmentMonth(direction) {
+  const candidate = new Date(appointmentCalendarYear, appointmentCalendarMonth + direction, 1);
+  const latest = new Date(appointmentCalendarStart.getFullYear(), appointmentCalendarStart.getMonth() + 1, 1);
+  if (candidate < appointmentCalendarStart || candidate > latest) return;
+  appointmentCalendarMonth = candidate.getMonth();
+  appointmentCalendarYear = candidate.getFullYear();
+  selectedDate = null;
+  selectedSlot = null;
+  appointmentAvailability = { bookedTimes: [], myAppointment: null };
+  document.getElementById("selectedDateLabel").textContent = "Select a date to view available business-hours time slots.";
+  document.getElementById("timeSlots").innerHTML = "";
+  document.getElementById("confirmCard").style.display = "none";
+  buildCalendar();
 }
 async function selectDate(d) {
   selectedDate = d; selectedSlot = null;

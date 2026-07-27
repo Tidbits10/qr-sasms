@@ -2,11 +2,9 @@ import { prisma } from "./prisma";
 import type { DocumentRequest } from "@prisma/client";
 import { shortDate, dateSort } from "./format";
 
-// Matches the original client-side DOC_LABELS mapping exactly.
+// Document types handled by the Student Services Office.
 export const DOC_LABELS: Record<string, string> = {
   gmc: "Excuse Slip",
-  coe: "Certificate of Enrollment",
-  tor: "Transcript of Records (TOR)",
   auth: "Authentication",
   excuseslip: "Excuse Slip Copy",
   other: "Other",
