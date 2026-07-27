@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
+import { isValidSchoolYear, masterlistValidationError } from "@/lib/masterlist-validation";
 
 // POST /api/masterlist/import  { rows: [{ sn, name, email, course, year }], fileName?, scope? }
 // Without `scope`: replaces the entire masterlist — matches the original
@@ -29,21 +30,28 @@ export async function POST(req: NextRequest) {
   if (scope && (!scopeSchoolYear || !scopeCourse || !scopeYear)) {
     return jsonError(400, "A scoped import needs a school year, course, and year level.", "INVALID_SCOPE");
   }
+  if (scope && !isValidSchoolYear(scopeSchoolYear)) {
+    return jsonError(400, "School year must use consecutive years in YYYY-YYYY format (example: 2026-2027).", "INVALID_SCHOOL_YEAR");
+  }
 
   const seen = new Set<string>();
   const clean: { sn: string; name: string; email: string; course: string; year: string; schoolYear: string }[] = [];
-  for (const r of rows) {
+  for (let index = 0; index < rows.length; index += 1) {
+    const r = rows[index];
     const sn = normSN(r?.sn);
-    if (!sn || seen.has(sn)) continue;
-    seen.add(sn);
-    clean.push({
+    if (seen.has(sn)) return jsonError(400, `Duplicate student number in CSV: ${sn}.`, "DUPLICATE_STUDENT_NUMBER");
+    const value = {
       sn,
       name: (r?.name || "").toString().trim(),
       email: (r?.email || "").toString().trim(),
       course: scope ? scopeCourse : (r?.course || "").toString().trim(),
       year: scope ? scopeYear : (r?.year || "").toString().trim(),
       schoolYear: scope ? scopeSchoolYear : (r?.schoolYear || "").toString().trim(),
-    });
+    };
+    const validationError = masterlistValidationError(value);
+    if (validationError) return jsonError(400, `CSV row ${index + 1}: ${validationError}`, "INVALID_CSV_ROW");
+    seen.add(sn);
+    clean.push(value);
   }
   if (!clean.length) {
     return jsonError(400, "No valid student numbers found in the CSV.", "EMPTY_CSV");

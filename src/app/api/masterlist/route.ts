@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
+import { masterlistValidationError } from "@/lib/masterlist-validation";
 
 // GET /api/masterlist          -> { count } — public, used by the "Masterlist
 //                                   loaded — N students" badge on login/register.
@@ -25,20 +26,24 @@ export async function POST(req: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   const body = await req.json().catch(() => null);
-  const sn = normSN(body?.sn);
-  if (!sn) return jsonError(400, "Enter a valid student number.", "INVALID_SN");
+  const values = {
+    sn: normSN(body?.sn),
+    name: (body?.name || "").toString().trim(),
+    email: (body?.email || "").toString().trim(),
+    course: (body?.course || "").toString().trim(),
+    year: (body?.year || "").toString().trim(),
+    schoolYear: (body?.schoolYear || "").toString().trim(),
+  };
+  const validationError = masterlistValidationError(values);
+  if (validationError) return jsonError(400, validationError, "INVALID_MASTERLIST_ENTRY");
+  const sn = values.sn;
 
   const existing = await prisma.masterlistEntry.findUnique({ where: { sn } });
   if (existing) return jsonError(409, `${sn} is already in the masterlist.`, "SN_EXISTS");
 
   const entry = await prisma.masterlistEntry.create({
     data: {
-      sn,
-      name: (body?.name || "").toString().trim(),
-      email: (body?.email || "").toString().trim(),
-      course: (body?.course || "").toString().trim(),
-      year: (body?.year || "").toString().trim(),
-      schoolYear: (body?.schoolYear || "").toString().trim(),
+      ...values,
     },
   });
   await addAudit("INFO", `Masterlist entry ${sn} added by ${auth.email}.`);

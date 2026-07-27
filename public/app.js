@@ -1316,6 +1316,15 @@ function openAppModal({ title, subtitle = "", icon = "fa-circle-info", content =
   return modal;
 }
 function modalField(label, id, value = "", extra = "") { return `<div class="app-field ${extra}"><label for="${id}">${esc(label)}</label><input id="${id}" class="glass-input" value="${esc(value)}"></div>`; }
+function schoolYearField(id, value = "", extra = "") { return `<div class="app-field ${extra}"><label for="${id}">School year</label><input id="${id}" class="glass-input" value="${esc(value)}" placeholder="2026-2027" inputmode="numeric" maxlength="9" pattern="\\d{4}-\\d{4}" oninput="formatSchoolYearInput(this)"><div style="font-size:10px;color:rgba(30,5,5,.55);margin-top:4px;">Use consecutive years, e.g. 2026-2027.</div></div>`; }
+function formatSchoolYearInput(input) {
+  const digits = input.value.replace(/\D/g, "").slice(0, 8);
+  input.value = digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits;
+}
+function validSchoolYear(value) {
+  const match = /^(\d{4})-(\d{4})$/.exec(value || "");
+  return !!match && Number(match[1]) >= 2000 && Number(match[2]) === Number(match[1]) + 1;
+}
 
 async function manageOrganizations() {
   const result = await api("/api/organizations");
@@ -2726,7 +2735,7 @@ function filterMasterlistList(query, scope) {
 function openMasterlistEditor(sn, scope = null) {
   const e = sn ? (window.__qrsMasterlist || []).find((x) => x.sn === sn) : null;
   const scopeArg = scopeArgOf(scope);
-  openAppModal({ title: e ? "Edit Masterlist Entry" : "Add Masterlist Entry", subtitle: e ? "Update this student's masterlist record." : scope ? `Add a student to ${scope.schoolYear} · ${scope.course} · ${scope.year}.` : "Add a single student to the masterlist.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Student number", "mlSn", e?.sn || "", "full")}${modalField("Full name", "mlName", e?.name || "")}${modalField("Email", "mlEmail", e?.email || "")}${modalField("Course", "mlCourse", e?.course || scope?.course || "")}${modalField("Year level", "mlYear", e?.year || scope?.year || "")}${modalField("School year", "mlSchoolYear", e?.schoolYear || scope?.schoolYear || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="${scope ? `manageMasterlist('', ${scopeArg})` : "manageMasterlist()"}">Back</button><button class="btn-maroon" onclick="saveMasterlistEntry('${e?.sn || ""}', ${scopeArg})">${e ? "Save changes" : "Add entry"}</button></div>` });
+  openAppModal({ title: e ? "Edit Masterlist Entry" : "Add Masterlist Entry", subtitle: e ? "Update this student's masterlist record." : scope ? `Add a student to ${scope.schoolYear} · ${scope.course} · ${scope.year}.` : "Add a single student to the masterlist.", icon: "fa-user-pen", content: `<div class="app-modal-grid">${modalField("Student number", "mlSn", e?.sn || "", "full")}${modalField("Full name", "mlName", e?.name || "")}${modalField("Email", "mlEmail", e?.email || "")}${modalField("Course", "mlCourse", e?.course || scope?.course || "")}${modalField("Year level", "mlYear", e?.year || scope?.year || "")}${schoolYearField("mlSchoolYear", e?.schoolYear || scope?.schoolYear || "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="${scope ? `manageMasterlist('', ${scopeArg})` : "manageMasterlist()"}">Back</button><button class="btn-maroon" onclick="saveMasterlistEntry('${e?.sn || ""}', ${scopeArg})">${e ? "Save changes" : "Add entry"}</button></div>` });
   const snField = document.getElementById("mlSn");
   if (snField && e) snField.disabled = true;
   if (scope && !e) { const courseField = document.getElementById("mlCourse"), yearField = document.getElementById("mlYear"), syField = document.getElementById("mlSchoolYear"); if (courseField) courseField.disabled = true; if (yearField) yearField.disabled = true; if (syField) syField.disabled = true; }
@@ -2738,6 +2747,9 @@ async function saveMasterlistEntry(originalSn, scope = null) {
   const course = document.getElementById("mlCourse")?.value.trim();
   const year = document.getElementById("mlYear")?.value.trim();
   const schoolYear = document.getElementById("mlSchoolYear")?.value.trim();
+  if (!/^\d{4}-\d{5}-SP-\d$/.test(sn || originalSn) || !name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !course || !year || !validSchoolYear(schoolYear)) {
+    return showToast("Enter a valid student number, full name, email, course, year level, and school year (e.g. 2026-2027).", "rgba(155,22,22,.85)");
+  }
   const result = originalSn
     ? await api(`/api/masterlist/${encodeURIComponent(originalSn)}`, { method: "PATCH", body: { name, email, course, year, schoolYear } })
     : await api("/api/masterlist", { method: "POST", body: { sn, name, email, course, year, schoolYear } });
@@ -2801,12 +2813,13 @@ async function manageMasterlistGroups() {
   openAppModal({ title: "Masterlist Groups", subtitle: "Organized by school year, course, and year level, each with an optional owner.", icon: "fa-layer-group", wide: true, content: `<div class="app-list" style="max-height:400px;overflow-y:auto;">${result.data.length ? result.data.map((g) => `<div class="app-row"><div><div class="app-row-title">${esc(g.schoolYear)} · ${esc(g.course)} · ${esc(g.year)}</div><div class="app-row-meta">${g.count} student${g.count === 1 ? "" : "s"} · Owner: ${g.owner ? esc(g.owner.name) : "Unassigned"}</div></div><div style="display:flex;gap:6px;"><button class="btn-soft" onclick="manageMasterlist('', {schoolYear:'${esc(g.schoolYear)}',course:'${esc(g.course)}',year:'${esc(g.year)}'})">View students</button>${superAdmin ? `<button class="btn-soft" onclick="openGroupOwnerEditor('${esc(g.id || "")}','${esc(g.schoolYear)}','${esc(g.course)}','${esc(g.year)}','${esc(g.owner?.id || "")}')">Assign owner</button>` : ""}</div></div>`).join("") : `<div class="app-row"><span class="app-row-meta">No groups yet.</span></div>`}</div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Close</button><button class="btn-maroon" onclick="addMasterlistGroupPrompt()"><i class="fa-solid fa-plus"></i> Add group</button></div>` });
 }
 function addMasterlistGroupPrompt() {
-  openAppModal({ title: "Add Masterlist Group", subtitle: "Register a school year, course, and year level — useful for assigning an owner before any students are imported.", icon: "fa-layer-group", content: `<div class="app-modal-grid">${modalField("School year", "grpSchoolYear", "", "full")}${modalField("Course", "grpCourse", "")}${modalField("Year level", "grpYear", "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="manageMasterlistGroups()">Back</button><button class="btn-maroon" onclick="saveMasterlistGroup()">Add group</button></div>` });
+  openAppModal({ title: "Add Masterlist Group", subtitle: "Register a school year, course, and year level — useful for assigning an owner before any students are imported.", icon: "fa-layer-group", content: `<div class="app-modal-grid">${schoolYearField("grpSchoolYear", "", "full")}${modalField("Course", "grpCourse", "")}${modalField("Year level", "grpYear", "")}</div><div class="app-modal-actions"><button class="btn-soft" onclick="manageMasterlistGroups()">Back</button><button class="btn-maroon" onclick="saveMasterlistGroup()">Add group</button></div>` });
 }
 async function saveMasterlistGroup() {
   const schoolYear = document.getElementById("grpSchoolYear")?.value.trim();
   const course = document.getElementById("grpCourse")?.value.trim();
   const year = document.getElementById("grpYear")?.value.trim();
+  if (!validSchoolYear(schoolYear)) return showToast("School year must be in YYYY-YYYY format, e.g. 2026-2027.", "rgba(155,22,22,.85)");
   const result = await api("/api/masterlist/groups", { method: "POST", body: { schoolYear, course, year } });
   if (result.ok) { showToast("Masterlist group added."); return manageMasterlistGroups(); }
   showToast(result.error || "Could not add that group.", "rgba(155,22,22,.85)");
