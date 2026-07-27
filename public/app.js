@@ -1573,13 +1573,63 @@ function adminSearchBox(id, varName, renderFn, placeholder, currentVal) {
 }
 function emptyState(msg) { return `<div class="glass-card" style="padding:26px;text-align:center;color:rgba(30,5,5,.5);font-size:12px;"><i class="fa-solid fa-inbox" style="font-size:20px;display:block;margin-bottom:8px;color:rgba(139,26,26,.35);"></i>${esc(msg)}</div>`; }
 
+const MODULE_REQUESTS_PER_PAGE = 5;
+const moduleRequestPages = {};
+function getModulePage(key, rows) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / MODULE_REQUESTS_PER_PAGE));
+  const page = Math.min(Math.max(1, moduleRequestPages[key] || 1), totalPages);
+  moduleRequestPages[key] = page;
+  const start = (page - 1) * MODULE_REQUESTS_PER_PAGE;
+  return { page, totalPages, start, items: rows.slice(start, start + MODULE_REQUESTS_PER_PAGE) };
+}
+function modulePagination(key, rowCount, renderFn) {
+  if (!rowCount) return "";
+  const { page, totalPages, start } = getModulePage(key, Array.from({ length: rowCount }));
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 2px 16px;font-size:11px;color:rgba(30,5,5,.58);"><span>Showing ${start + 1}-${Math.min(start + MODULE_REQUESTS_PER_PAGE, rowCount)} of ${rowCount}</span><div style="display:flex;align-items:center;gap:8px;"><button class="btn-ghost" ${page === 1 ? "disabled" : ""} onclick="changeModulePage('${key}',${page - 1},'${renderFn}')" style="padding:6px 10px;font-size:11px;">‹ Previous</button><b style="color:#8B1A1A;">${page} / ${totalPages}</b><button class="btn-ghost" ${page === totalPages ? "disabled" : ""} onclick="changeModulePage('${key}',${page + 1},'${renderFn}')" style="padding:6px 10px;font-size:11px;">Next ›</button></div></div>`;
+}
+function changeModulePage(key, page, renderFn) {
+  moduleRequestPages[key] = page;
+  window[renderFn]();
+}
+function requestDropdown(summary, content, open = false) {
+  return `<details class="glass-card" ${open ? "open" : ""} style="padding:0;margin-bottom:10px;overflow:hidden;"><summary style="cursor:pointer;list-style:none;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">${summary}<i class="fa-solid fa-chevron-down" style="color:#8B1A1A;font-size:12px;"></i></summary><div style="padding:0 14px 14px;border-top:1px solid rgba(139,26,26,.10);">${content}</div></details>`;
+}
+function enableRequestDropdowns(container) {
+  container?.querySelectorAll("[data-module-request]").forEach((card) => {
+    const header = card.firstElementChild;
+    const sections = Array.from(card.children).slice(1);
+    if (!header || !sections.length || header.dataset.dropdownReady) return;
+    header.dataset.dropdownReady = "true";
+    header.style.cursor = "pointer";
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    const arrow = document.createElement("i");
+    arrow.className = "fa-solid fa-chevron-down";
+    arrow.style.cssText = "color:#8B1A1A;font-size:12px;margin-left:auto;transition:transform .18s ease;";
+    header.appendChild(arrow);
+    const setOpen = (open) => {
+      sections.forEach((section) => { section.style.display = open ? "" : "none"; });
+      arrow.style.transform = open ? "rotate(180deg)" : "";
+      header.setAttribute("aria-expanded", String(open));
+    };
+    setOpen(false);
+    const toggle = (event) => {
+      if (event.target.closest("button,input,select,textarea,a,label")) return;
+      setOpen(header.getAttribute("aria-expanded") !== "true");
+    };
+    header.addEventListener("click", toggle);
+    header.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle(event); } });
+  });
+}
+
 /* ══════════ 1. REFERRAL & INTERVENTION ══════════ */
 const REF_STATUSES = ["Pending", "Under Review", "Approved", "Ongoing Intervention", "Completed", "Rejected"];
 function renderReferral() {
   const el = document.getElementById("referralBody");
   if (isAdmin()) {
-    const rows = [...MOD.referrals].reverse().filter((r) => matchQ(refAdminQ, [r.name, r.sn, r.id, r.category, r.status])).map((r) => `
-      <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+    const list = [...MOD.referrals].reverse().filter((r) => matchQ(refAdminQ, [r.name, r.sn, r.id, r.category, r.status]));
+    const rows = getModulePage("ref-admin", list).items.map((r) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
           <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(r.name)}</span>
             <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(r.sn)} · ${esc(r.category)} · ${esc(r.ts)}</span></div>
@@ -1596,9 +1646,11 @@ function renderReferral() {
         ${r.history && r.history.length ? `<div style="margin-top:8px;font-size:10px;color:rgba(30,5,5,.5);font-family:monospace;">${r.history.map((h) => `${esc(h.ts)} — ${esc(h.status)} by ${esc(h.by)}`).join("<br>")}</div>` : ""}
       </div>`).join("");
     el.innerHTML = adminSearchBox("refAdminQBox", "refAdminQ", "renderReferral", "Search by name or student ID…", refAdminQ)
-      + (rows || emptyState(refAdminQ ? "No referrals match your search." : "No referrals submitted yet."));
+      + (rows || emptyState(refAdminQ ? "No referrals match your search." : "No referrals submitted yet.")) + modulePagination("ref-admin", list.length, "renderReferral");
+    enableRequestDropdowns(el);
   } else {
     const mine = MOD.referrals.filter((r) => r.sn === session.id).reverse();
+    const minePage = getModulePage("ref-student", mine);
     el.innerHTML = `
       <div class="glass-card" style="padding:18px;margin-bottom:16px;">
         <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-plus" style="color:#8B1A1A;margin-right:6px;"></i>New Referral / Intervention Request</div>
@@ -1611,8 +1663,8 @@ function renderReferral() {
         </div>
       </div>
       <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:8px;">My Referrals</div>
-      ${mine.length ? mine.map((r) => `
-        <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+      ${mine.length ? minePage.items.map((r) => `
+        <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
             <div style="font-size:12px;font-weight:700;color:#1a0505;">${esc(r.category)} <span style="color:rgba(30,5,5,.5);font-weight:400;">· ${esc(r.ts)}</span></div>
             ${pill(r.status)}
@@ -1620,7 +1672,9 @@ function renderReferral() {
           <div style="font-size:12px;color:rgba(30,5,5,.75);margin-top:6px;white-space:pre-wrap;">${esc(r.details)}</div>
           ${r.remarks ? `<div style="font-size:11px;color:#8B1A1A;margin-top:6px;"><b>OSS remarks:</b> ${esc(r.remarks)}</div>` : ""}
         </div>`).join("") : emptyState("You have not submitted any referrals yet.")}
+      ${modulePagination("ref-student", mine.length, "renderReferral")}
     `;
+    enableRequestDropdowns(el);
   }
 }
 async function refSubmit() {
@@ -1646,8 +1700,9 @@ const ID_STATUSES = ["Pending", "OR Verified", "Approved", "Processing", "Ready 
 function renderIdApp() {
   const el = document.getElementById("idappBody");
   if (isAdmin()) {
-    const rows = [...MOD.idapps].reverse().filter((a) => matchQ(idaAdminQ, [a.name, a.sn, a.id, a.type, a.status])).map((a) => `
-      <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+    const list = [...MOD.idapps].reverse().filter((a) => matchQ(idaAdminQ, [a.name, a.sn, a.id, a.type, a.status]));
+    const rows = getModulePage("idapp-admin", list).items.map((a) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
           <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(a.name)}</span>
             <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(a.sn)} · ${esc(a.type)} · ${esc(a.ts)}</span></div>
@@ -1664,9 +1719,11 @@ function renderIdApp() {
         </div>
       </div>`).join("");
     el.innerHTML = adminSearchBox("idaAdminQBox", "idaAdminQ", "renderIdApp", "Search by name or student ID…", idaAdminQ)
-      + (rows || emptyState(idaAdminQ ? "No applications match your search." : "No ID applications yet."));
+      + (rows || emptyState(idaAdminQ ? "No applications match your search." : "No ID applications yet.")) + modulePagination("idapp-admin", list.length, "renderIdApp");
+    enableRequestDropdowns(el);
   } else {
     const mine = MOD.idapps.filter((a) => a.sn === session.id).reverse();
+    const minePage = getModulePage("idapp-student", mine);
     el.innerHTML = `
       <div class="glass-card" style="padding:18px;margin-bottom:16px;">
         <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-plus" style="color:#8B1A1A;margin-right:6px;"></i>New ID Application</div>
@@ -1686,8 +1743,8 @@ function renderIdApp() {
         </div>
       </div>
       <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:8px;">My Applications</div>
-      ${mine.length ? mine.map((a) => `
-        <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+      ${mine.length ? minePage.items.map((a) => `
+        <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
             <div style="font-size:12px;font-weight:700;color:#1a0505;">${esc(a.type)} <span style="color:rgba(30,5,5,.5);font-weight:400;">· ${esc(a.ts)}</span></div>
             ${pill(a.status)}
@@ -1695,7 +1752,9 @@ function renderIdApp() {
           <div style="margin-top:6px;display:flex;gap:12px;flex-wrap:wrap;">${fileLink(a.orName, a.orUrl, "My uploaded OR")}${a.affidavitUrl ? fileLink(a.affidavitName, a.affidavitUrl, "My Affidavit of Loss") : ""}</div>
           ${a.remarks ? `<div style="font-size:11px;color:#8B1A1A;margin-top:6px;"><b>OSS remarks:</b> ${esc(a.remarks)}</div>` : ""}
         </div>`).join("") : emptyState("No applications yet.")}
+      ${modulePagination("idapp-student", mine.length, "renderIdApp")}
     `;
+    enableRequestDropdowns(el);
   }
 }
 async function idSubmit() {
@@ -1861,8 +1920,9 @@ function renderHelpdesk() {
       ${who === "admin" ? `<button onclick="hdClose('${t.id}')" class="btn-ghost" style="padding:8px 12px;font-size:12px;">Close</button>` : ""}
     </div>`;
   if (isAdmin()) {
-    const rows = [...MOD.tickets].reverse().filter((t) => matchQ(hdAdminQ, [t.name, t.sn, t.id, t.subject, t.category, t.status])).map((t) => `
-      <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+    const list = [...MOD.tickets].reverse().filter((t) => matchQ(hdAdminQ, [t.name, t.sn, t.id, t.subject, t.category, t.status]));
+    const rows = getModulePage("helpdesk-admin", list).items.map((t) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
           <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(t.subject)}</span>
             <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(t.name)} (${esc(t.sn)}) · ${esc(t.category)} · ${esc(t.ts)}</span></div>
@@ -1871,7 +1931,8 @@ function renderHelpdesk() {
         ${thread(t)}${replyBox(t, "admin")}
       </div>`).join("");
     el.innerHTML = adminSearchBox("hdAdminQBox", "hdAdminQ", "renderHelpdesk", "Search by name or student ID…", hdAdminQ)
-      + (rows || emptyState(hdAdminQ ? "No tickets match your search." : "No tickets yet."));
+      + (rows || emptyState(hdAdminQ ? "No tickets match your search." : "No tickets yet.")) + modulePagination("helpdesk-admin", list.length, "renderHelpdesk");
+    enableRequestDropdowns(el);
   } else {
     if (!chatbotMessages.length) chatbotMessages = [{ from: "bot", text: "Hi! I can answer questions using the Student Services FAQ. Ask about documents, enrollment, ID concerns, events, or other listed services." }];
     el.innerHTML = `
@@ -1989,8 +2050,9 @@ let evtEditingId = null;
 function renderEvents2() {
   const el = document.getElementById("events2Body");
   if (isAdmin()) {
-    const rows = [...MOD.events2].reverse().filter((e) => matchQ(evtAdminQ, [e.name, e.sn, e.id, e.title, e.org, e.status])).map((e) => `
-      <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+    const list = [...MOD.events2].reverse().filter((e) => matchQ(evtAdminQ, [e.name, e.sn, e.id, e.title, e.org, e.status]));
+    const rows = getModulePage("events-admin", list).items.map((e) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
           <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(e.title)}</span>
             <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(e.org)} · filed by ${esc(e.name)} · ${esc(e.ts)}</span></div>
@@ -2012,9 +2074,11 @@ function renderEvents2() {
         ${e.history.length ? `<div style="margin-top:8px;font-size:10px;color:rgba(30,5,5,.5);font-family:monospace;">${e.history.map((h) => `${esc(h.ts)} — ${esc(h.status)}${h.note ? ": " + esc(h.note) : ""} (${esc(h.by)})`).join("<br>")}</div>` : ""}
       </div>`).join("");
     el.innerHTML = adminSearchBox("evtAdminQBox", "evtAdminQ", "renderEvents2", "Search by name, student ID, or org…", evtAdminQ)
-      + (rows || emptyState(evtAdminQ ? "No event requests match your search." : "No event requests yet."));
+      + (rows || emptyState(evtAdminQ ? "No event requests match your search." : "No event requests yet.")) + modulePagination("events-admin", list.length, "renderEvents2");
+    enableRequestDropdowns(el);
   } else {
     const mine = MOD.events2.filter((e) => e.sn === session.id).reverse();
+    const minePage = getModulePage("events-student", mine);
     const editing = evtEditingId ? MOD.events2.find((e) => e.id === evtEditingId) : null;
     const canSubmit = MY_ORGANIZATIONS.length > 0;
     const organizationOptions = MY_ORGANIZATIONS.map((o) => `<option value="${esc(o.id)}" ${editing && editing.organizationId === o.id ? "selected" : ""}>${esc(o.name)}</option>`).join("");
@@ -2049,8 +2113,8 @@ function renderEvents2() {
         </div>
       </div>` : `<div class="glass-card" style="padding:18px;margin-bottom:16px;border:1px solid rgba(139,26,26,.20);"><div style="font-weight:800;color:#8B1A1A;margin-bottom:5px;"><i class="fa-solid fa-user-shield" style="margin-right:6px;"></i>Organization representative access required</div><div style="font-size:12px;color:rgba(30,5,5,.68);line-height:1.6;">Only active student officers assigned by the Super Admin or SSO Admin can submit an Event Request. Contact the Student Services Office if a representative needs to be assigned.</div></div>`}
       <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:8px;">My Event Requests</div>
-      ${mine.length ? mine.map((e) => `
-        <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+      ${mine.length ? minePage.items.map((e) => `
+        <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
             <div style="font-size:12px;font-weight:700;color:#1a0505;">${esc(e.title)} <span style="color:rgba(30,5,5,.5);font-weight:400;">· ${esc(e.org)} · ${esc(e.date)}</span></div>
             <div style="display:flex;gap:6px;align-items:center;">
@@ -2060,7 +2124,9 @@ function renderEvents2() {
           </div>
           ${e.history.length ? `<div style="margin-top:6px;font-size:10px;color:rgba(30,5,5,.55);font-family:monospace;">${e.history.map((h) => `${esc(h.ts)} — ${esc(h.status)}${h.note ? ": " + esc(h.note) : ""}`).join("<br>")}</div>` : ""}
         </div>`).join("") : emptyState("No event requests yet.")}
+      ${modulePagination("events-student", mine.length, "renderEvents2")}
     `;
+    enableRequestDropdowns(el);
     if (canSubmit) syncEventAdviser();
   }
 }
@@ -2110,8 +2176,9 @@ const CMP_STATUSES = ["Submitted", "Under Investigation", "Resolved", "Dismissed
 function renderComplaint() {
   const el = document.getElementById("complaintBody");
   if (isAdmin()) {
-    const rows = [...MOD.complaints].reverse().filter((c) => matchQ(cmpAdminQ, [c.name, c.sn, c.id, c.category, c.status])).map((c) => `
-      <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+    const list = [...MOD.complaints].reverse().filter((c) => matchQ(cmpAdminQ, [c.name, c.sn, c.id, c.category, c.status]));
+    const rows = getModulePage("complaints-admin", list).items.map((c) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
         <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
           <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(c.id)}</span>
             <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(c.category)} · ${esc(c.ts)}</span></div>
@@ -2133,9 +2200,11 @@ function renderComplaint() {
         </div>
       </div>`).join("");
     el.innerHTML = adminSearchBox("cmpAdminQBox", "cmpAdminQ", "renderComplaint", "Search by name, student ID, or ref code…", cmpAdminQ)
-      + (rows || emptyState(cmpAdminQ ? "No complaints match your search." : "No complaints filed."));
+      + (rows || emptyState(cmpAdminQ ? "No complaints match your search." : "No complaints filed.")) + modulePagination("complaints-admin", list.length, "renderComplaint");
+    enableRequestDropdowns(el);
   } else {
     const mine = MOD.complaints.filter((c) => c.sn === session.id).reverse();
+    const minePage = getModulePage("complaints-student", mine);
     el.innerHTML = `
       <div class="glass-card" style="padding:14px;margin-bottom:14px;background:rgba(139,26,26,.06);border:1px solid rgba(139,26,26,.15);">
         <div style="font-size:12px;color:#1a0505;"><i class="fa-solid fa-lock" style="color:#8B1A1A;margin-right:6px;"></i><b>Confidentiality notice:</b> Your complaint is visible only to authorized OSS personnel. Your identity will not be disclosed to other parties without your consent.</div>
@@ -2153,15 +2222,17 @@ function renderComplaint() {
         </div>
       </div>
       <div style="font-size:13px;font-weight:800;color:#1a0505;margin-bottom:8px;">My Complaints</div>
-      ${mine.length ? mine.map((c) => `
-        <div class="glass-card" style="padding:14px;margin-bottom:10px;">
+      ${mine.length ? minePage.items.map((c) => `
+        <div class="glass-card" data-module-request style="padding:14px;margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
             <div style="font-size:12px;font-weight:700;color:#1a0505;">${esc(c.id)} <span style="color:rgba(30,5,5,.5);font-weight:400;">· ${esc(c.category)} · ${esc(c.ts)}</span></div>
             ${pill(c.status)}
           </div>
           ${c.note ? `<div style="font-size:11px;color:#8B1A1A;margin-top:6px;"><b>OSS resolution note:</b> ${esc(c.note)}</div>` : ""}
         </div>`).join("") : emptyState("No complaints filed.")}
+      ${modulePagination("complaints-student", mine.length, "renderComplaint")}
     `;
+    enableRequestDropdowns(el);
   }
 }
 async function cmpSubmit() {
