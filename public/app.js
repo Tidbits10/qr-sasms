@@ -80,7 +80,7 @@ let PENDING_ACCOUNTS = []; // accounts awaiting admin approval
 let MASTERLIST_COUNT = 0;
 let MOD = { referrals: [], idapps: [], bulletins: [], tickets: [], faqs: [], events2: [], complaints: [], forms: [], memos: [] };
 let ADMIN_ACTIVITY = null;
-const REQUESTS_PER_PAGE = 7;
+const REQUESTS_PER_PAGE = 5;
 let adminRequestPage = 1;
 let studentRequestPage = 1;
 let lastAdminTableFilterKey = "";
@@ -467,6 +467,7 @@ function renderStudentEventStatus() {
   const el = document.getElementById("studentEventStatusCard");
   if (!el || !session) return;
   const mine = (MOD.events2 || []).filter((event) => event.sn === session.id).slice().reverse();
+  const eventPage = getModulePage("student-event-status", mine);
   const canSubmitEvent = MY_ORGANIZATIONS.length > 0;
   // A revoked officer loses submission access, but never loses visibility of
   // their own existing event-request history.
@@ -475,7 +476,7 @@ function renderStudentEventStatus() {
   const eventButton = canSubmitEvent
     ? `<button onclick="goTo('page-events2')" class="btn-maroon" style="padding:8px 12px;font-size:11px;"><i class="fa-solid fa-plus" style="margin-right:5px;"></i>Event Request</button>`
     : `<span style="font-size:11px;color:rgba(30,5,5,.55);">Representative access is inactive</span>`;
-  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div>${eventButton}</div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? mine.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>`;
+  el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;"><div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-calendar-star" style="color:#D4A017;margin-right:8px;"></i>My Event Requests</div>${eventButton}</div><div style="overflow-x:auto;"><table class="glass-table" style="min-width:580px;"><thead><tr><th>Event</th><th>Organization</th><th>Date</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead><tbody>${mine.length ? eventPage.items.map((event) => `<tr><td style="font-weight:700;">${esc(event.title)}</td><td>${esc(event.org)}</td><td style="font-size:12px;">${esc(event.date)}</td><td>${pill(event.status)}</td><td style="text-align:right;">${event.status === "Needs Revision" ? `<button onclick="evtEditingId='${esc(event.id)}';goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">Revise</button>` : `<button onclick="goTo('page-events2')" class="btn-ghost" style="padding:6px 10px;font-size:11px;">View</button>`}</td></tr>`).join("") : `<tr><td colspan="5" style="text-align:center;color:rgba(30,5,5,.56);padding:16px;">No event requests yet.</td></tr>`}</tbody></table></div>${modulePagination("student-event-status", mine.length, "renderStudentEventStatus")}`;
 }
 
 async function renderStudentAppointment() {
@@ -1935,6 +1936,16 @@ function renderHelpdesk() {
     enableRequestDropdowns(el);
   } else {
     if (!chatbotMessages.length) chatbotMessages = [{ from: "bot", text: "Hi! I can answer questions using the Student Services FAQ. Ask about documents, enrollment, ID concerns, events, or other listed services." }];
+    const mine = [...MOD.tickets].filter((t) => t.sn === session.id).reverse();
+    const rows = getModulePage("helpdesk-student", mine).items.map((t) => `
+      <div class="glass-card" data-module-request style="padding:14px;margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;">
+          <div><span style="font-weight:800;font-size:13px;color:#1a0505;">${esc(t.subject)}</span>
+            <span style="font-size:11px;color:rgba(30,5,5,.55);margin-left:6px;">${esc(t.category)} · ${esc(t.ts)}</span></div>
+          ${pill(t.status)}
+        </div>
+        ${thread(t)}${replyBox(t, "student")}
+      </div>`).join("");
     el.innerHTML = `
       <div class="glass-card" style="padding:18px;max-width:820px;margin:0 auto;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><div style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#8B1A1A;color:#F5C518;"><i class="fa-solid fa-robot"></i></div><div><div style="font-size:15px;font-weight:900;color:#1a0505;">Student Service Help</div><div style="font-size:11px;color:rgba(30,5,5,.6);">FAQ chatbot · Answers are based on approved FAQs</div></div></div>
@@ -1943,7 +1954,13 @@ function renderHelpdesk() {
         </div>
         <div style="margin-top:12px;"><div style="font-size:11px;font-weight:800;color:#8B1A1A;margin-bottom:7px;">Choose a frequently asked question</div><div style="display:flex;gap:7px;flex-wrap:wrap;max-height:108px;overflow-y:auto;padding-right:3px;">${MOD.faqs.length ? MOD.faqs.map((faq) => `<button onclick="chatbotAskFaq('${esc(faq.id)}')" class="btn-ghost" style="padding:7px 10px;font-size:11px;text-align:left;">${esc(faq.q)}</button>`).join("") : '<span style="font-size:11px;color:rgba(30,5,5,.55);">No FAQs are available yet.</span>'}</div></div>
         <div style="display:flex;gap:8px;margin-top:12px;"><input id="chatbotInput" class="glass-input" style="flex:1" placeholder="Ask a question about Student Services…" onkeydown="if(event.key==='Enter')chatbotAsk()"><button onclick="chatbotAsk()" class="btn-maroon" style="padding:10px 16px;"><i class="fa-solid fa-paper-plane"></i> Send</button></div>
+      </div>
+      <div style="margin:18px auto 0;max-width:820px;">
+        <div style="font-size:15px;font-weight:900;color:#1a0505;margin-bottom:8px;"><i class="fa-solid fa-ticket" style="color:#D4A017;margin-right:7px;"></i>My Help Desk Tickets</div>
+        ${rows || emptyState("No help desk tickets yet.")}
+        ${modulePagination("helpdesk-student", mine.length, "renderHelpdesk")}
       </div>`;
+    enableRequestDropdowns(el);
     requestAnimationFrame(() => { const box = document.getElementById("chatbotMessages"); if (box) box.scrollTop = box.scrollHeight; });
   }
 }
