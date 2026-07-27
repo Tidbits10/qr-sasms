@@ -1217,11 +1217,8 @@ const STUDENT_SERVICES = [
   { page: "page-faq", icon: "fa-circle-question", t: "FAQ", d: "Frequently asked questions" },
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Downloadable Forms", d: "Official OSS forms" },
 ];
-const ADMIN_SERVICES = [
-  { action: "manageOrganizations", icon: "fa-people-group", t: "Organizations & Representatives", d: "Assign verified student officers to event access" },
+const ADMIN_STAFF_SERVICES = [
   { action: "manageMasterlist", icon: "fa-users-rectangle", t: "Masterlist Manager", d: "Add, edit, or remove masterlist entries" },
-  { action: "manageMasterlistGroups", icon: "fa-layer-group", t: "Masterlist Groups", d: "Organize by school year, course, and year level" },
-  { action: "manageStudentAccounts", icon: "fa-user-lock", t: "Student Accounts", d: "Place accounts on hold or reactivate them" },
   { page: "page-referral", icon: "fa-hand-holding-heart", t: "Referrals", d: "Review & manage interventions" },
   { page: "page-idapp", icon: "fa-id-card", t: "ID Applications", d: "Verify ORs & update statuses" },
   { page: "page-helpdesk", icon: "fa-headset", t: "Help Desk", d: "Respond to student tickets" },
@@ -1236,6 +1233,15 @@ const ADMIN_SERVICES = [
   { action: "reviewProfileChanges", icon: "fa-user-check", t: "Profile Verification", d: "Approve or reject student profile updates" },
   { action: "sendReminders", icon: "fa-bell", t: "Send Reminders", d: "Email appointment and document-ready reminders" },
 ];
+const SUPER_ADMIN_SERVICES = [
+  { action: "manageOrganizations", icon: "fa-people-group", t: "Organizations & Representatives", d: "Control organization access and officers" },
+  { action: "manageMasterlistGroups", icon: "fa-layer-group", t: "Masterlist Groups", d: "Organize groups and assign staff owners" },
+  { action: "manageStudentAccounts", icon: "fa-user-lock", t: "Student Accounts", d: "Place accounts on hold or reactivate them" },
+  { action: "manageSystemSettings", icon: "fa-sliders", t: "System Settings", d: "Business hours, holidays, capacity, and cutoff" },
+  { action: "manageStaffAccounts", icon: "fa-user-shield", t: "Staff Accounts", d: "Create and review Admin and Scanner accounts" },
+  { action: "downloadBackup", icon: "fa-database", t: "Database Backup", d: "Download a secure JSON backup export" },
+  { action: "restoreBackup", icon: "fa-clock-rotate-left", t: "Restore Configuration", d: "Restore masterlist, settings, and FAQs from backup" },
+];
 function hubCard(x) {
   const icon = x.icon.split(",").pop();
   const action = x.action ? `${x.action}()` : `goTo('${x.page}')`;
@@ -1248,13 +1254,17 @@ function hubCard(x) {
 }
 function renderServicesHub() { document.getElementById("servicesGrid").innerHTML = STUDENT_SERVICES.map(hubCard).join(""); }
 function renderManageHub() {
-  const superTools = isSuperAdmin() ? [
-    { action: "manageSystemSettings", icon: "fa-sliders", t: "System Settings", d: "Business hours, holidays, capacity, and cutoff" },
-    { action: "manageStaffAccounts", icon: "fa-user-shield", t: "Staff Accounts", d: "Create and review Admin and Scanner accounts" },
-    { action: "downloadBackup", icon: "fa-database", t: "Database Backup", d: "Download a secure JSON backup export" },
-    { action: "restoreBackup", icon: "fa-clock-rotate-left", t: "Restore Configuration", d: "Restore masterlist, settings, and FAQs from backup" },
-  ] : [];
-  document.getElementById("manageGrid").innerHTML = [...ADMIN_SERVICES, ...superTools].map(hubCard).join("");
+  const section = (title, subtitle, icon, tools, restricted = false) => `
+    <section style="margin-bottom:28px;">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin:0 0 12px;padding:12px 14px;border-radius:14px;background:${restricted ? "rgba(139,26,26,.10)" : "rgba(245,197,24,.12)"};border:1px solid ${restricted ? "rgba(139,26,26,.22)" : "rgba(212,160,23,.26)"};">
+        <div style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:${restricted ? "rgba(139,26,26,.16)" : "rgba(212,160,23,.16)"};"><i class="fa-solid ${icon}" style="color:${restricted ? "#8B1A1A" : "#b8860b"};"></i></div>
+        <div><div style="font-size:15px;font-weight:900;color:#1a0505;">${title}${restricted ? ' <span style="font-size:10px;color:#8B1A1A;letter-spacing:.06em;">RESTRICTED</span>' : ""}</div><div style="font-size:11px;color:rgba(30,5,5,.64);margin-top:2px;">${subtitle}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;">${tools.map(hubCard).join("")}</div>
+    </section>`;
+  const output = [section("Admin Staff Tools", "Daily processing, communication, requests, and student services.", "fa-briefcase", ADMIN_STAFF_SERVICES)];
+  if (isSuperAdmin()) output.push(section("Super Admin Tools", "Restricted account, organization, configuration, and recovery controls.", "fa-shield-halved", SUPER_ADMIN_SERVICES, true));
+  document.getElementById("manageGrid").innerHTML = output.join("");
 }
 
 function downloadBackup() {
