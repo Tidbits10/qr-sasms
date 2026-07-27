@@ -121,7 +121,7 @@ async function loadRegistrationCourses() {
   select.innerHTML = courses.map((course) => `<option value="${esc(course)}">${esc(course)}</option>`).join("");
 }
 
-const DOC_LABELS = { gmc: "Excuse Slip", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other" };
+const DOC_LABELS = { gmc: "Excuse Slip", auth: "Authentication", other: "Other" };
 const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
 const DOC_REQUIREMENTS = {
   gmc: ["Valid PUP student ID", "Clear purpose for the request"],
@@ -1000,7 +1000,7 @@ function renderCharts() {
 
   const docCounts = {};
   DB.forEach((r) => { docCounts[r.docKey] = (docCounts[r.docKey] || 0) + 1; });
-  const barLabels = ["gmc", "auth", "other", "Excuse Slip"];
+  const barLabels = ["gmc", "auth", "other"];
   const barData = barLabels.map((k) => docCounts[k] || 0);
   const bCtx = document.getElementById("barChart");
   if (bCtx) {
@@ -1011,7 +1011,7 @@ function renderCharts() {
     if (!barChartInst) {
       barChartInst = new Chart(bCtx, {
         type: "bar",
-        data: { labels: ["Excuse Slip", "Authentication", "Other", "Excuse Slip Copy"], datasets: [{ data: barData, backgroundColor: "#8B1A1A", borderRadius: 4 }] },
+        data: { labels: ["Excuse Slip", "Authentication", "Other"], datasets: [{ data: barData, backgroundColor: "#8B1A1A", borderRadius: 4 }] },
         options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { ticks: { color: "rgba(80,20,20,.55)", font: { size: 10, family: "Inter" } }, grid: { display: false } } } },
       });
     }
