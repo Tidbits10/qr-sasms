@@ -6,6 +6,8 @@ import { normSN } from "@/lib/format";
 import { jsonError } from "@/lib/http";
 import { sendMail } from "@/lib/mailer";
 
+const DEFAULT_COURSES = ["BSCS", "BSIT", "BSBA", "BSA", "BEED"];
+
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const first = (body?.first || "").toString().trim();
@@ -24,6 +26,20 @@ export async function POST(req: NextRequest) {
   }
 
   const normalizedSn = normSN(sn);
+
+  // Course choices are controlled by the Super Admin. Validate again on the
+  // server so a request cannot submit an arbitrary course outside the UI.
+  const courseSetting = await prisma.systemSetting.findUnique({ where: { key: "courses" } });
+  let allowedCourses = DEFAULT_COURSES;
+  try {
+    const savedCourses = courseSetting?.value ? JSON.parse(courseSetting.value) : null;
+    if (Array.isArray(savedCourses) && savedCourses.length) allowedCourses = savedCourses;
+  } catch {
+    // Use safe defaults when an old setting value cannot be parsed.
+  }
+  if (!allowedCourses.includes(course)) {
+    return jsonError(400, "Please select an available course.", "INVALID_COURSE");
+  }
 
   // 1. Check masterlist
   const masterlistEntry = await prisma.masterlistEntry.findFirst({

@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS = {
   appointmentCapacity: 1,
   cancellationCutoffHours: 24,
   holidays: [],
+  courses: ["BSCS", "BSIT", "BSBA", "BSA", "BEED"],
   emailTemplate: "{{message}}\n\n— QR-SASMS, PUP San Pedro Student Services Office",
 };
 
@@ -18,11 +19,26 @@ function readSettings(rows: { key: string; value: string }[]) {
     appointmentCapacity: values.appointmentCapacity ? Number(values.appointmentCapacity) : DEFAULT_SETTINGS.appointmentCapacity,
     cancellationCutoffHours: values.cancellationCutoffHours ? Number(values.cancellationCutoffHours) : DEFAULT_SETTINGS.cancellationCutoffHours,
     holidays: values.holidays ? JSON.parse(values.holidays) : DEFAULT_SETTINGS.holidays,
+    courses: values.courses ? JSON.parse(values.courses) : DEFAULT_SETTINGS.courses,
     emailTemplate: values.emailTemplate || DEFAULT_SETTINGS.emailTemplate,
   };
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Registration is public, but it only needs the configured course names.
+  if (req.nextUrl.searchParams.get("public") === "registration") {
+    const setting = await prisma.systemSetting.findUnique({ where: { key: "courses" } });
+    let courses = DEFAULT_SETTINGS.courses;
+    try {
+      if (setting?.value) {
+        const saved = JSON.parse(setting.value);
+        if (Array.isArray(saved) && saved.length) courses = saved;
+      }
+    } catch {
+      // Keep registration available using the default list if old setting data is invalid.
+    }
+    return NextResponse.json({ courses });
+  }
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
   const rows = await prisma.systemSetting.findMany();
@@ -37,8 +53,11 @@ export async function PUT(req: NextRequest) {
   const cutoff = Number(body?.cancellationCutoffHours);
   const hours = Array.isArray(body?.businessHours) ? body.businessHours.map((x: unknown) => String(x).trim()).filter(Boolean) : null;
   const holidays = Array.isArray(body?.holidays) ? body.holidays.map((x: unknown) => String(x).trim()).filter(Boolean) : null;
+  const courses: string[] | null = Array.isArray(body?.courses)
+    ? [...new Set<string>(body.courses.map((x: unknown) => String(x).trim()).filter(Boolean))]
+    : null;
   const emailTemplate = String(body?.emailTemplate || "").trim();
-  if (!hours?.length || hours.length > 20 || !Number.isInteger(capacity) || capacity < 1 || capacity > 50 || !Number.isInteger(cutoff) || cutoff < 0 || cutoff > 168 || !holidays || !emailTemplate || emailTemplate.length > 5000) {
+  if (!hours?.length || hours.length > 20 || !courses?.length || courses.length > 30 || courses.some((course) => course.length > 40) || !Number.isInteger(capacity) || capacity < 1 || capacity > 50 || !Number.isInteger(cutoff) || cutoff < 0 || cutoff > 168 || !holidays || !emailTemplate || emailTemplate.length > 5000) {
     return jsonError(400, "Invalid system settings.", "INVALID_SETTINGS");
   }
   await prisma.$transaction([
@@ -46,6 +65,7 @@ export async function PUT(req: NextRequest) {
     prisma.systemSetting.upsert({ where: { key: "appointmentCapacity" }, update: { value: String(capacity) }, create: { key: "appointmentCapacity", value: String(capacity) } }),
     prisma.systemSetting.upsert({ where: { key: "cancellationCutoffHours" }, update: { value: String(cutoff) }, create: { key: "cancellationCutoffHours", value: String(cutoff) } }),
     prisma.systemSetting.upsert({ where: { key: "holidays" }, update: { value: JSON.stringify(holidays) }, create: { key: "holidays", value: JSON.stringify(holidays) } }),
+    prisma.systemSetting.upsert({ where: { key: "courses" }, update: { value: JSON.stringify(courses) }, create: { key: "courses", value: JSON.stringify(courses) } }),
     prisma.systemSetting.upsert({ where: { key: "emailTemplate" }, update: { value: emailTemplate }, create: { key: "emailTemplate", value: emailTemplate } }),
   ]);
   await addAudit("INFO", `System settings updated by ${auth.name}.`);

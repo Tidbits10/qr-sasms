@@ -110,6 +110,16 @@ function updateMasterlistStatus() {
     ? `<i class="fa-solid fa-circle-check" style="color:#16a34a;margin-right:4px;"></i>Masterlist loaded — ${MASTERLIST_COUNT} student${MASTERLIST_COUNT > 1 ? "s" : ""}`
     : `<i class="fa-solid fa-triangle-exclamation" style="color:#d97706;margin-right:4px;"></i>No masterlist loaded`;
 }
+const DEFAULT_REGISTRATION_COURSES = ["BSCS", "BSIT", "BSBA", "BSA", "BEED"];
+async function loadRegistrationCourses() {
+  const select = document.getElementById("regCourse");
+  if (!select) return;
+  const result = await api("/api/settings?public=registration");
+  const courses = result.ok && Array.isArray(result.data?.courses) && result.data.courses.length
+    ? result.data.courses
+    : DEFAULT_REGISTRATION_COURSES;
+  select.innerHTML = courses.map((course) => `<option value="${esc(course)}">${esc(course)}</option>`).join("");
+}
 
 const DOC_LABELS = { gmc: "Excuse Slip", coe: "Certificate of Enrollment", tor: "Transcript of Records (TOR)", auth: "Authentication", "Excuse Slip": "Excuse Slip Copy", other: "Other" };
 const DOC_HELPS = { gmc: "📄 Excuse Slip — Requests for leave of absence or excused from classes. Required for employment, further studies, or government transactions.", auth: "🔏 Authentication — Certifies the authenticity of PUP-issued documents for foreign use or apostille.", other: "📁 Other Documents — Please specify in the additional notes field." };
@@ -342,7 +352,9 @@ async function goTo(pageId) {
   if (pageId === "page-complaint") { await loadModule("complaints"); renderComplaint(); }
   if (pageId === "page-forms") { await loadModule("forms"); renderForms(); }
   if (pageId === "page-memo") { await loadModule("memos"); renderMemo(); }
-  if (["page-login", "page-register"].includes(pageId)) await refreshMasterlistStatus();
+  if (["page-login", "page-register"].includes(pageId)) {
+    await Promise.all([refreshMasterlistStatus(), loadRegistrationCourses()]);
+  }
   await updateNav(pageId);
 }
 async function goBack() { await goTo(prevPage || (isAdmin() ? "page-admin" : "page-student")); }
@@ -2646,7 +2658,7 @@ function mountVersionBadge() {
 ──────────────────────────────────────────── */
 (async function init() {
   mountVersionBadge();
-  await refreshMasterlistStatus();
+  await Promise.all([refreshMasterlistStatus(), loadRegistrationCourses()]);
   try {
     await restoreSession(); // silently signs the user back in if their cookie is still valid
   } finally {
@@ -2681,11 +2693,11 @@ async function manageSystemSettings() {
   const result = await api("/api/settings");
   if (!result.ok) return showToast("Could not load settings.", "rgba(155,22,22,.85)");
   const s = result.data;
-  openAppModal({ title: "System Settings", subtitle: "Control appointment availability and outgoing email content.", icon: "fa-sliders", wide: true, content: `<div class="app-modal-grid">${modalField("Business hours (comma-separated)", "setHours", (s.businessHours || []).join(", "), "full")}${modalField("Capacity per appointment slot", "setCapacity", s.appointmentCapacity)}${modalField("Cancellation / reschedule cutoff (hours)", "setCutoff", s.cancellationCutoffHours)}${modalField("Closed dates / holidays", "setHolidays", (s.holidays || []).join(", "), "full")}<div class="app-field full"><label for="setEmailTemplate">Email template</label><textarea id="setEmailTemplate" class="glass-input">${esc(s.emailTemplate || "{{message}}\n\n— QR-SASMS")}</textarea><span class="app-row-meta">Available placeholders: {{name}}, {{title}}, {{message}}</span></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="saveSystemSettings()"><i class="fa-solid fa-floppy-disk"></i> Save settings</button></div>` });
+  openAppModal({ title: "System Settings", subtitle: "Control appointments, registration courses, and outgoing email content.", icon: "fa-sliders", wide: true, content: `<div class="app-modal-grid">${modalField("Business hours (comma-separated)", "setHours", (s.businessHours || []).join(", "), "full")}${modalField("Capacity per appointment slot", "setCapacity", s.appointmentCapacity)}${modalField("Cancellation / reschedule cutoff (hours)", "setCutoff", s.cancellationCutoffHours)}${modalField("Closed dates / holidays", "setHolidays", (s.holidays || []).join(", "), "full")}${modalField("Available registration courses (comma-separated)", "setCourses", (s.courses || DEFAULT_REGISTRATION_COURSES).join(", "), "full")}<div class="app-field full"><label for="setEmailTemplate">Email template</label><textarea id="setEmailTemplate" class="glass-input">${esc(s.emailTemplate || "{{message}}\n\n— QR-SASMS")}</textarea><span class="app-row-meta">Available placeholders: {{name}}, {{title}}, {{message}}</span></div></div><div class="app-modal-actions"><button class="btn-soft" onclick="closeAppModal()">Cancel</button><button class="btn-maroon" onclick="saveSystemSettings()"><i class="fa-solid fa-floppy-disk"></i> Save settings</button></div>` });
 }
 async function saveSystemSettings() {
   const hours = document.getElementById("setHours")?.value.split(",").map((x) => x.trim()).filter(Boolean) || [];
-  const result = await api("/api/settings", { method: "PUT", body: { businessHours: hours, appointmentCapacity: Number(document.getElementById("setCapacity")?.value), cancellationCutoffHours: Number(document.getElementById("setCutoff")?.value), holidays: (document.getElementById("setHolidays")?.value || "").split(",").map((x) => x.trim()).filter(Boolean), emailTemplate: document.getElementById("setEmailTemplate")?.value || "" } });
+  const result = await api("/api/settings", { method: "PUT", body: { businessHours: hours, appointmentCapacity: Number(document.getElementById("setCapacity")?.value), cancellationCutoffHours: Number(document.getElementById("setCutoff")?.value), holidays: (document.getElementById("setHolidays")?.value || "").split(",").map((x) => x.trim()).filter(Boolean), courses: (document.getElementById("setCourses")?.value || "").split(",").map((x) => x.trim()).filter(Boolean), emailTemplate: document.getElementById("setEmailTemplate")?.value || "" } });
   if (result.ok) closeAppModal();
   showToast(result.ok ? "System settings saved." : (result.error || "Could not save settings."), result.ok ? undefined : "rgba(155,22,22,.85)");
 }
