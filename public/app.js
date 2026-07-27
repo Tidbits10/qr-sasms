@@ -311,7 +311,10 @@ async function goTo(pageId) {
   if (prevPage && prevPage !== pageId) window.__qrsPageScroll[prevPage] = window.scrollY;
   document.querySelectorAll(".page").forEach((p) => { p.classList.remove("active"); p.style.display = "none"; });
   const p = document.getElementById(pageId);
-  p.classList.add("active"); p.style.display = "block";
+  p.classList.add("active");
+  // Auth screens use a flex layout to keep their card centered. Setting every
+  // page to block here previously overrode that layout after logout/navigation.
+  p.style.display = publicPages.includes(pageId) ? "flex" : "block";
   const savedScroll = window.__qrsPageScroll[pageId] || 0;
   requestAnimationFrame(() => window.scrollTo({ top: savedScroll, left: 0, behavior: "auto" }));
 
