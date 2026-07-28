@@ -14,7 +14,7 @@ async function runWithConcurrency<T, R>(items: T[], limit: number, work: (item: 
 }
 
 export async function GET() {
-  const auth = await requireSession(["admin"]);
+  const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;
   const rows = await prisma.memo.findMany({ orderBy: { createdAt: "asc" } });
   return NextResponse.json(withTsList(rows));
@@ -23,7 +23,7 @@ export async function GET() {
 // A masterlist email blast only targets entries that do not have a registered
 // account. When selected, its course/year filter is matched against CSV data.
 export async function POST(req: NextRequest) {
-  const auth = await requireSession(["admin"]);
+  const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;
 
   const reqBody = await req.json().catch(() => ({}));

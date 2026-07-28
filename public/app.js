@@ -302,7 +302,10 @@ async function goTo(pageId) {
     pageId = "page-login";
   }
   if (session) {
-    if (session.role === "student" && (pageId === "page-admin" || pageId === "page-manage" || pageId === "page-memo")) {
+    if (pageId === "page-memo" && !isSuperAdmin()) {
+      showToast("⚠️ Email Blast is restricted to Super Admin.", "rgba(139,26,26,.9)"); return;
+    }
+    if (session.role === "student" && (pageId === "page-admin" || pageId === "page-manage")) {
       showToast("⚠️ Access denied.", "rgba(139,26,26,.9)"); return;
     }
     if ((session.role === "admin" || session.role === "super_admin") && (pageId === "page-student" || pageId === "page-request" || pageId === "page-appointment" || pageId === "page-services")) {
@@ -1260,7 +1263,6 @@ const ADMIN_STAFF_SERVICES = [
   { page: "page-faq", icon: "fa-circle-question", t: "FAQ Manager", d: "Maintain FAQ content" },
   { action: "viewFaqAnalytics", icon: "fa-chart-simple", t: "FAQ Usage", d: "View chatbot usage analytics" },
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Forms Manager", d: "Upload & manage forms" },
-  { page: "page-memo", icon: "fa-envelopes-bulk", t: "Email Blast", d: "Send memos to student groups" },
   { action: "openReports", icon: "fa-chart-column", t: "Reports & Analytics", d: "Export CSV reports and view service trends" },
   { action: "reviewProfileChanges", icon: "fa-user-check", t: "Profile Verification", d: "Approve or reject student profile updates" },
   { action: "sendReminders", icon: "fa-bell", t: "Send Reminders", d: "Email appointment and document-ready reminders" },
@@ -1271,6 +1273,7 @@ const SUPER_ADMIN_SERVICES = [
   { action: "manageStudentAccounts", icon: "fa-user-lock", t: "Student Accounts", d: "Place accounts on hold or reactivate them" },
   { action: "manageSystemSettings", icon: "fa-sliders", t: "System Settings", d: "Business hours, holidays, capacity, and cutoff" },
   { action: "manageStaffAccounts", icon: "fa-user-shield", t: "Staff Accounts", d: "Create and review Admin and Scanner accounts" },
+  { page: "page-memo", icon: "fa-envelopes-bulk", t: "Email Blast", d: "Send memos to student groups" },
   { action: "downloadBackup", icon: "fa-database", t: "Database Backup", d: "Download a secure JSON backup export" },
   { action: "restoreBackup", icon: "fa-clock-rotate-left", t: "Restore Configuration", d: "Restore masterlist, settings, and FAQs from backup" },
 ];
