@@ -24,6 +24,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const from = auth.role === "admin" || auth.role === "super_admin" ? "admin" : "student";
   const msgs = Array.isArray(existing.msgs) ? (existing.msgs as Prisma.JsonArray) : [];
+  const last = msgs.at(-1);
+  if (last && typeof last === "object" && !Array.isArray(last)) {
+    const previous = last as Prisma.JsonObject;
+    if (previous.from === from && previous.text === text) {
+      return jsonError(409, "Duplicate reply ignored.", "DUPLICATE_REPLY");
+    }
+  }
   msgs.push({ from, by: auth.name, text, ts: fnow() });
 
   const status = from === "admin" ? "Answered" : existing.status === "Answered" ? "Open" : existing.status;

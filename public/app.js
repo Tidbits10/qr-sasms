@@ -1918,7 +1918,7 @@ function renderHelpdesk() {
   const replyBox = (t, who) => t.status === "Closed" ? "" : `
     <div style="display:flex;gap:8px;margin-top:8px;">
       <input id="hdrep-${t.id}" class="glass-input" style="flex:1;padding:8px;font-size:12px;" placeholder="Type a ${who === "admin" ? "response" : "reply"}…">
-      <button onclick="hdReply('${t.id}')" class="btn-maroon" style="padding:8px 14px;font-size:12px;">Send</button>
+      <button onclick="hdReply('${t.id}', this)" class="btn-maroon" style="padding:8px 14px;font-size:12px;">Send</button>
       ${who === "admin" ? `<button onclick="hdClose('${t.id}')" class="btn-ghost" style="padding:8px 12px;font-size:12px;">Close</button>` : ""}
     </div>`;
   if (isAdmin()) {
@@ -2015,12 +2015,23 @@ async function hdSubmit() {
   showToast("✅ Ticket submitted.");
   await loadModule("tickets"); renderHelpdesk();
 }
-async function hdReply(id) {
+const helpDeskRepliesInFlight = new Set();
+async function hdReply(id, button) {
+  if (helpDeskRepliesInFlight.has(id)) return;
   const inp = document.getElementById("hdrep-" + id);
   const txt = inp.value.trim(); if (!txt) return;
-  const { ok, error } = await api(`/api/modules/tickets/${encodeURIComponent(id)}/reply`, { method: "POST", body: { text: txt } });
-  if (!ok) { showToast(`❌ ${error || "Could not send reply."}`, "rgba(155,22,22,.85)"); return; }
-  await loadModule("tickets"); renderHelpdesk();
+  helpDeskRepliesInFlight.add(id);
+  if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending'; }
+  inp.disabled = true;
+  try {
+    const { ok, error } = await api(`/api/modules/tickets/${encodeURIComponent(id)}/reply`, { method: "POST", body: { text: txt } });
+    if (!ok) { showToast(`❌ ${error || "Could not send reply."}`, "rgba(155,22,22,.85)"); return; }
+    await loadModule("tickets"); renderHelpdesk();
+  } finally {
+    helpDeskRepliesInFlight.delete(id);
+    if (button?.isConnected) { button.disabled = false; button.textContent = "Send"; }
+    if (inp?.isConnected) inp.disabled = false;
+  }
 }
 async function hdClose(id) {
   const { ok, error } = await api(`/api/modules/tickets/${encodeURIComponent(id)}/close`, { method: "POST" });
