@@ -157,7 +157,7 @@ async function main() {
   if (faqCount === 0) {
     await prisma.faq.createMany({
       data: [
-        { id: "FAQ-SEED1", cat: "Document Requests", q: "How long does a document request take to process?", a: "Most documents (Excuse Slip, COE) take 3–5 working days. TOR may take up to 10 working days depending on records." },
+        { id: "FAQ-SEED1", cat: "Document Requests", q: "How long does a document request take to process?", a: "Most supported document requests are processed within 3–5 working days." },
         { id: "FAQ-SEED2", cat: "Document Requests", q: "How will I know my document is ready?", a: 'You will receive an email notification and your request status in the portal will change to "Ready to Claim."' },
         { id: "FAQ-SEED3", cat: "Student ID", q: "What do I need to bring when claiming my ID?", a: "Bring one valid ID and your QR code/reference number from this portal." },
         { id: "FAQ-SEED4", cat: "Student ID", q: "Is there a payment for a lost ID replacement?", a: "No payment is required for a lost ID replacement. Upload your signed Affidavit of Loss in the ID Application module." },

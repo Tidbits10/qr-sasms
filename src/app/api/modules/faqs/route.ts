@@ -9,7 +9,12 @@ export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
   const rows = await prisma.faq.findMany({ orderBy: { createdAt: "asc" } });
-  return NextResponse.json(rows);
+  const unsupportedDocument = /\btor\b|transcript of records/i;
+  return NextResponse.json(rows
+    .map((faq) => faq.id === "FAQ-SEED1"
+      ? { ...faq, a: "Most supported document requests are processed within 3–5 working days." }
+      : faq)
+    .filter((faq) => !unsupportedDocument.test(`${faq.q} ${faq.a}`)));
 }
 
 // POST /api/modules/faqs  { cat, q, a } — admin only.
@@ -22,6 +27,7 @@ export async function POST(req: NextRequest) {
   const q = (body?.q || "").toString().trim();
   const a = (body?.a || "").toString().trim();
   if (!q || !a) return jsonError(400, "Question and answer are required.", "MISSING_FIELDS");
+  if (/\btor\b|transcript of records/i.test(`${q} ${a}`)) return jsonError(400, "Transcript of Records (TOR) is not handled by this system.", "UNSUPPORTED_SERVICE");
 
   const created = await prisma.faq.create({ data: { id: genId("FAQ"), cat, q, a } });
   await addAudit("INFO", `FAQ added by ${auth.name}.`);
