@@ -3,7 +3,7 @@ services:
     runtime: node
     name: qr-sasms
     plan: free
-    buildCommand: npm ci && npx prisma db push && npm run build
+    buildCommand: npm ci && npx prisma db push && npm run bootstrap:admin && npm run build
     startCommand: npm start
     healthCheckPath: /
     envVars:
@@ -31,6 +31,12 @@ services:
         sync: false
       - key: CRON_SECRET
         generateValue: true
+      - key: BOOTSTRAP_SUPER_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_SUPER_ADMIN_NAME
+        value: SSO Admin
 
 databases:
   - name: qr-sasms-db
