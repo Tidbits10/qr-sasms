@@ -1244,10 +1244,7 @@ function fileLink(name, data, label) {
 }
 
 const STUDENT_SERVICES = [
-  { page: "page-referral", icon: "fa-hand-holding-heart", t: "Referral & Intervention", d: "Request support or refer a concern" },
-  { page: "page-idapp", icon: "fa-id-card", t: "ID Application", d: "New ID or replacement (OR required)" },
   { page: "page-helpdesk", icon: "fa-robot", t: "Student Service Help", d: "Ask the FAQ chatbot" },
-  { page: "page-complaint", icon: "fa-shield-heart", t: "Complaints", d: "Confidential reports & concerns" },
   { page: "page-bulletin", icon: "fa-bullhorn", t: "Student Bulletin", d: "Announcements & advisories" },
   { page: "page-faq", icon: "fa-circle-question", t: "FAQ", d: "Frequently asked questions" },
   { page: "page-forms", icon: "fa-file-arrow-down", t: "Downloadable Forms", d: "Official OSS forms" },
