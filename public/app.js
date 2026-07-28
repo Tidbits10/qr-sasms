@@ -378,7 +378,7 @@ async function updateNav(pageId) {
   const iconMap = { student: "fa-user-graduate", admin: "fa-shield-halved", scanner: "fa-qrcode" };
   const items = links[role] || links.student;
   const ctrl = `<div style="display:flex;align-items:center;gap:6px;">
-    <button onclick="toggleBell()" class="nav-link" style="position:relative;padding:10px 20px;" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:99px;background:#dc2626;color:#fff;font-size:9px;font-weight:900;align-items:center;justify-content:center;padding:0 3px;line-height:15px;">0</span></button>
+    <button id="bellToggle" onclick="toggleBell()" class="nav-link" style="position:relative;padding:10px 20px;" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span id="bellBadge" style="display:none;position:absolute;top:2px;right:3px;min-width:15px;height:15px;border-radius:99px;background:#dc2626;color:#fff;font-size:9px;font-weight:900;align-items:center;justify-content:center;padding:0 3px;line-height:15px;">0</span></button>
     <div style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,220,220,.22);border-radius:10px;padding:5px 10px;">
       <div style="width:22px;height:22px;border-radius:50%;background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.3);display:flex;align-items:center;justify-content:center;"><i class="fa-solid ${iconMap[role]}" style="font-size:10px;color:#F5C518;"></i></div>
       <span style="font-size:12px;font-weight:700;color:rgba(255,220,220,.95);">${session.name.split(" ")[0]}</span>
@@ -2600,12 +2600,16 @@ function startAdminDashboardPolling() {
 function notificationDestination(notification) {
   const text = `${notification.title} ${notification.body}`.toLowerCase();
   if (text.includes("complaint")) return "page-complaint";
-  if (text.includes("appointment")) return isAdmin() ? "page-admin" : "page-appointment";
-  if (text.includes("document request") || text.includes("claim")) return isAdmin() ? "page-admin" : "page-student";
-  if (text.includes("account approval") || text.includes("new student account")) return "page-admin";
-  if (text.includes("id application")) return "page-idapp";
+  if (text.includes("event request") || text.includes("event ")) return "page-events2";
+  if (text.includes("referral")) return "page-referral";
+  if (text.includes("id application") || text.includes("student id")) return "page-idapp";
   if (text.includes("ticket") || text.includes("help desk")) return "page-helpdesk";
   if (text.includes("announcement") || text.includes("bulletin")) return "page-bulletin";
+  if (text.includes("memo")) return "page-memo";
+  if (text.includes("form")) return "page-forms";
+  if (text.includes("appointment")) return isAdmin() ? "page-admin" : "page-appointment";
+  if (text.includes("document request") || text.includes("claim")) return isAdmin() ? "page-admin" : "page-student";
+  if (text.includes("account approval") || text.includes("new student account") || text.includes("profile update") || text.includes("masterlist")) return isAdmin() ? "page-admin" : "page-student";
   return isAdmin() ? "page-admin" : "page-student";
 }
 async function openNotification(id) {
@@ -2765,6 +2769,18 @@ function mountVersionBadge() {
 ──────────────────────────────────────────── */
 (async function init() {
   mountVersionBadge();
+  document.addEventListener("pointerdown", (event) => {
+    const panel = document.getElementById("bellPanel");
+    const toggle = document.getElementById("bellToggle");
+    if (!panel || panel.style.display !== "block") return;
+    if (!panel.contains(event.target) && !toggle?.contains(event.target)) panel.style.display = "none";
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      const panel = document.getElementById("bellPanel");
+      if (panel) panel.style.display = "none";
+    }
+  });
   await Promise.all([refreshMasterlistStatus(), loadRegistrationCourses()]);
   try {
     await restoreSession(); // silently signs the user back in if their cookie is still valid
