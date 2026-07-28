@@ -1899,6 +1899,7 @@ async function bulDelete(id) {
 
 /* ══════════ 4. HELP DESK ══════════ */
 let chatbotMessages = [];
+let chatbotEscalationQuestion = "";
 function renderHelpdesk() {
   const el = document.getElementById("helpdeskBody");
   const thread = (t) => `
@@ -1949,6 +1950,7 @@ function renderHelpdesk() {
         <div id="chatbotMessages" style="height:420px;overflow-y:auto;padding:14px;background:rgba(255,255,255,.48);border:1px solid rgba(139,26,26,.12);border-radius:14px;display:flex;flex-direction:column;gap:10px;">
           ${chatbotMessages.map((m) => `<div style="display:flex;justify-content:${m.from === "user" ? "flex-end" : "flex-start"};"><div style="max-width:82%;padding:10px 12px;border-radius:12px;background:${m.from === "user" ? "rgba(139,26,26,.14)" : "rgba(245,197,24,.16)"};font-size:13px;color:#1a0505;line-height:1.5;white-space:pre-wrap;">${esc(m.text)}</div></div>`).join("")}
         </div>
+        ${chatbotEscalationQuestion ? `<div style="margin-top:10px;padding:10px 12px;border:1px solid rgba(139,26,26,.18);background:rgba(139,26,26,.06);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;"><span style="font-size:11px;color:rgba(30,5,5,.72);"><i class="fa-solid fa-headset" style="color:#8B1A1A;margin-right:5px;"></i>Need more help? Send this question to the Help Desk.</span><button onclick="submitChatbotTicket()" class="btn-maroon" style="padding:7px 10px;font-size:11px;"><i class="fa-solid fa-paper-plane" style="margin-right:4px;"></i>Submit Ticket</button></div>` : ""}
         <div style="margin-top:12px;"><div style="font-size:11px;font-weight:800;color:#8B1A1A;margin-bottom:7px;">Choose a frequently asked question</div><div style="display:flex;gap:7px;flex-wrap:wrap;max-height:108px;overflow-y:auto;padding-right:3px;">${MOD.faqs.length ? MOD.faqs.map((faq) => `<button onclick="chatbotAskFaq('${esc(faq.id)}')" class="btn-ghost" style="padding:7px 10px;font-size:11px;text-align:left;">${esc(faq.q)}</button>`).join("") : '<span style="font-size:11px;color:rgba(30,5,5,.55);">No FAQs are available yet.</span>'}</div></div>
         <div style="display:flex;gap:8px;margin-top:12px;"><input id="chatbotInput" class="glass-input" style="flex:1" placeholder="Ask a question about Student Services…" onkeydown="if(event.key==='Enter')chatbotAsk()"><button onclick="chatbotAsk()" class="btn-maroon" style="padding:10px 16px;"><i class="fa-solid fa-paper-plane"></i> Send</button></div>
       </div>
@@ -1965,20 +1967,39 @@ function chatbotAsk() {
   const input = document.getElementById("chatbotInput");
   const question = input.value.trim();
   if (!question) return;
+  chatbotEscalationQuestion = "";
   chatbotMessages.push({ from: "user", text: question });
   const words = question.toLowerCase().match(/[a-z0-9]{3,}/g) || [];
   const scored = MOD.faqs.map((faq) => ({ faq, score: words.reduce((n, word) => n + ((faq.q + " " + faq.a + " " + faq.cat).toLowerCase().includes(word) ? 1 : 0), 0) })).sort((a, b) => b.score - a.score);
   const best = scored[0];
   api("/api/faq-analytics", { method: "POST", body: { faqId: best?.score ? best.faq.id : "unmatched" } });
-  chatbotMessages.push({ from: "bot", text: best?.score ? `${best.faq.a}\n\nSource: ${best.faq.q}` : "I couldn't find a matching FAQ yet. Try different keywords or check the FAQ service for the full list." });
+  if (best?.score) {
+    chatbotMessages.push({ from: "bot", text: `${best.faq.a}\n\nSource: ${best.faq.q}` });
+  } else {
+    chatbotEscalationQuestion = question;
+    chatbotMessages.push({ from: "bot", text: "I couldn't find a matching FAQ for that question. You can send it to the Help Desk so an SSO staff member can assist you." });
+  }
   renderHelpdesk();
 }
 function chatbotAskFaq(id) {
   const faq = MOD.faqs.find((item) => item.id === id);
   if (!faq) return;
+  chatbotEscalationQuestion = "";
   chatbotMessages.push({ from: "user", text: faq.q });
   chatbotMessages.push({ from: "bot", text: faq.a });
   api("/api/faq-analytics", { method: "POST", body: { faqId: faq.id } });
+  renderHelpdesk();
+}
+async function submitChatbotTicket() {
+  const question = chatbotEscalationQuestion.trim();
+  if (!question) return;
+  const subject = `Chatbot assistance: ${question.length > 70 ? `${question.slice(0, 67)}...` : question}`;
+  const { ok, error } = await api("/api/modules/tickets", { method: "POST", body: { category: "Chatbot question", subject, message: question } });
+  if (!ok) { showToast(`❌ ${error || "Could not submit the Help Desk ticket."}`, "rgba(155,22,22,.85)"); return; }
+  chatbotEscalationQuestion = "";
+  chatbotMessages.push({ from: "bot", text: "Your question was submitted to the Help Desk. An SSO staff member will respond through your ticket." });
+  await loadModule("tickets");
+  showToast("✅ Help Desk ticket submitted.");
   renderHelpdesk();
 }
 async function hdSubmit() {
