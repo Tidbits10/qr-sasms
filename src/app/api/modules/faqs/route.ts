@@ -8,6 +8,16 @@ import { genId } from "@/lib/format";
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
+  await prisma.faq.upsert({
+    where: { id: "FAQ-SEED7" },
+    update: {},
+    create: {
+      id: "FAQ-SEED7",
+      cat: "Document Requests",
+      q: "How do I request an Excuse Slip?",
+      a: "From your dashboard, select New Request or Excuse Slip under Quick Request. Choose Excuse Slip, select the purpose or reason, add notes if needed, then submit the request. You can track its status on your dashboard.",
+    },
+  });
   const rows = await prisma.faq.findMany({ orderBy: { createdAt: "asc" } });
   const unsupportedDocument = /\btor\b|transcript of records/i;
   return NextResponse.json(rows

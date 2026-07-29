@@ -156,6 +156,7 @@ async function main() {
         { id: "FAQ-SEED3", cat: "Student ID", q: "What do I need to bring when claiming my ID?", a: "Bring one valid ID and your QR code/reference number from this portal." },
         { id: "FAQ-SEED4", cat: "Student ID", q: "Is there a payment for a lost ID replacement?", a: "No payment is required for a lost ID replacement. Upload your signed Affidavit of Loss in the ID Application module." },
         { id: "FAQ-SEED5", cat: "Events", q: "How early should our org file an event request?", a: "At least 10 working days before the event date, with your adviser's endorsement attached." },
+        { id: "FAQ-SEED7", cat: "Document Requests", q: "How do I request an Excuse Slip?", a: "From your dashboard, select New Request or Excuse Slip under Quick Request. Choose Excuse Slip, select the purpose or reason, add notes if needed, then submit the request. You can track its status on your dashboard." },
         { id: "FAQ-SEED6", cat: "General", q: "What are the SSO office hours?", a: "Monday to Friday, 8:00 AM – 5:00 PM (no noon break)." },
       ],
     });

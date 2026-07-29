@@ -1829,6 +1829,24 @@ async function bulDelete(id) {
 
 let chatbotMessages = [];
 let chatbotEscalationQuestion = "";
+const chatbotStopWords = new Set(["about", "also", "and", "ang", "are", "ba", "can", "could", "does", "for", "from", "get", "how", "i", "is", "it", "ko", "mga", "need", "ng", "of", "on", "or", "please", "pwede", "sa", "the", "to", "what", "where", "when", "with", "you", "your"]);
+const chatbotGenericKeywords = new Set(["request", "service", "student"]);
+function chatbotKeywords(value) {
+  return [...new Set((String(value || "").toLowerCase().match(/[a-z0-9]{3,}/g) || []).map((word) => {
+    if (word.endsWith("ies") && word.length > 4) return `${word.slice(0, -3)}y`;
+    if (word.endsWith("s") && word.length > 3) return word.slice(0, -1);
+    return word;
+  }).filter((word) => !chatbotStopWords.has(word)))];
+}
+function chatbotFaqScore(faq, keywords) {
+  const questionText = String(faq.q || "").toLowerCase();
+  const answerText = String(faq.a || "").toLowerCase();
+  const categoryText = String(faq.cat || "").toLowerCase();
+  return keywords.reduce((score, word) => score
+    + (questionText.includes(word) ? 3 : 0)
+    + (categoryText.includes(word) ? 2 : 0)
+    + (answerText.includes(word) ? 1 : 0), 0);
+}
 function renderHelpdesk() {
   const el = document.getElementById("helpdeskBody");
   const thread = (t) => `
@@ -1898,11 +1916,14 @@ function chatbotAsk() {
   if (!question) return;
   chatbotEscalationQuestion = "";
   chatbotMessages.push({ from: "user", text: question });
-  const words = question.toLowerCase().match(/[a-z0-9]{3,}/g) || [];
-  const scored = MOD.faqs.map((faq) => ({ faq, score: words.reduce((n, word) => n + ((faq.q + " " + faq.a + " " + faq.cat).toLowerCase().includes(word) ? 1 : 0), 0) })).sort((a, b) => b.score - a.score);
+  const words = chatbotKeywords(question);
+  const specificWords = words.filter((word) => !chatbotGenericKeywords.has(word));
+  const scored = MOD.faqs.map((faq) => ({ faq, score: chatbotFaqScore(faq, words), specificScore: chatbotFaqScore(faq, specificWords) })).sort((a, b) => b.score - a.score);
   const best = scored[0];
-  api("/api/faq-analytics", { method: "POST", body: { faqId: best?.score ? best.faq.id : "unmatched" } });
-  if (best?.score) {
+  const minimumScore = words.length > 1 ? 2 : 3;
+  const isRelevant = best?.score >= minimumScore && (!specificWords.length || best.specificScore > 0);
+  api("/api/faq-analytics", { method: "POST", body: { faqId: isRelevant ? best.faq.id : "unmatched" } });
+  if (isRelevant) {
     chatbotMessages.push({ from: "bot", text: `${best.faq.a}\n\nSource: ${best.faq.q}` });
   } else {
     chatbotEscalationQuestion = question;
