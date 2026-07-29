@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 import { sendMail } from "./mailer";
 import { normSN } from "./format";
 
-/** Finds a student's email: registered account first, then the SSO masterlist. */
+
 export async function emailForStudent(studentId: string): Promise<string | null> {
   const sn = normSN(studentId);
   const user = await prisma.user.findFirst({ where: { studentId: sn } });
@@ -12,12 +12,7 @@ export async function emailForStudent(studentId: string): Promise<string | null>
   return null;
 }
 
-/**
- * Sends (or simulates) an email to a student and always records the
- * attempt in the EmailLog table so the admin "Email Outbox" reflects
- * exactly what happened — matches the original notifyStudent()/sendEmailTo()
- * behavior, just backed by real SMTP + Postgres instead of EmailJS + localStorage.
- */
+
 export async function notifyStudentByEmail(opts: {
   studentId: string;
   name: string;
@@ -43,7 +38,7 @@ export async function notifyStudentByEmail(opts: {
   return log;
 }
 
-/** target: 'admin' | 'students' (broadcast) | a specific student number */
+
 export async function addNotification(target: string, title: string, body: string) {
   return prisma.notification.create({ data: { target, title, body } });
 }

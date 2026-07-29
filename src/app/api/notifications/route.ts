@@ -9,7 +9,7 @@ function targetsFor(session: SessionPayload) {
   return [session.studentId || session.email, "students"];
 }
 
-// GET /api/notifications — the caller's own notifications (bell dropdown).
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -24,7 +24,7 @@ export async function GET() {
   );
 }
 
-// DELETE /api/notifications — clears the caller's own notifications.
+
 export async function DELETE() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;

@@ -11,7 +11,7 @@ export default function QRCameraScanner({ onScanSuccess }: QRCameraScannerProps)
   const [isScanning, setIsScanning] = useState(true);
 
   useEffect(() => {
-    // Para maiwasan ang multiple instances ng scanner
+    
     const scanner = new Html5QrcodeScanner(
       "reader",
       { fps: 10, qrbox: { width: 250, height: 250 } },
@@ -20,20 +20,20 @@ export default function QRCameraScanner({ onScanSuccess }: QRCameraScannerProps)
 
     scanner.render(
       (decodedText) => {
-        // Kapag may na-scan na QR Code, ipapasa natin ang text
+        
         onScanSuccess(decodedText);
         
-        // I-pause o i-stop muna ang scanner para hindi mag-multiple scan
+        
         scanner.clear();
         setIsScanning(false);
       },
       (error) => {
-        // Normal lang ang errors dito habang naghahanap ng QR code ang camera
-        // Kaya hindi natin kailangan i-console.log lahat para hindi bumaha sa console
+        
+        
       }
     );
 
-    // Cleanup function kapag umalis sa page ang user (para mamatay ang camera)
+    
     return () => {
       scanner.clear().catch((error) => console.error("Failed to clear scanner", error));
     };

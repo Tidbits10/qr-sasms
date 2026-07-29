@@ -3,7 +3,7 @@ import { requireSession } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { sendDueEmailReminders } from "@/lib/reminders";
 
-// Can be called manually by staff, or by a protected scheduler once the app is deployed.
+
 export async function POST() {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

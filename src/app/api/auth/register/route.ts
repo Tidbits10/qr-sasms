@@ -27,21 +27,21 @@ export async function POST(req: NextRequest) {
 
   const normalizedSn = normSN(sn);
 
-  // Course choices are controlled by the Super Admin. Validate again on the
-  // server so a request cannot submit an arbitrary course outside the UI.
+  
+  
   const courseSetting = await prisma.systemSetting.findUnique({ where: { key: "courses" } });
   let allowedCourses = DEFAULT_COURSES;
   try {
     const savedCourses = courseSetting?.value ? JSON.parse(courseSetting.value) : null;
     if (Array.isArray(savedCourses) && savedCourses.length) allowedCourses = savedCourses;
   } catch {
-    // Use safe defaults when an old setting value cannot be parsed.
+    
   }
   if (!allowedCourses.includes(course)) {
     return jsonError(400, "Please select an available course.", "INVALID_COURSE");
   }
 
-  // 1. Check masterlist
+  
   const masterlistEntry = await prisma.masterlistEntry.findFirst({
     where: { sn: normalizedSn },
   });
@@ -70,8 +70,6 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await hashPassword(password);
   const name = `${first} ${last}`;
-
-  // 2. Create user with approved: false (Manual Admin Approval)
   const account = await prisma.user.create({
     data: {
       studentId: normalizedSn,
@@ -86,13 +84,7 @@ export async function POST(req: NextRequest) {
   });
 
   await addAudit("INFO", `New student account created — ${name} (${sn}).`);
-  
-  // 3. Notify Admin na may bagong kailangang i-approve
   await addNotification("admin", "Account Approval Needed", `${name} (${sn}) registered and is awaiting your approval.`);
-
-  // Email delivery must never hold up registration. SMTP can be slow on a
-  // hosted service, so create the account and return first; the email result
-  // is still recorded in the background for staff monitoring.
   void (async () => {
     try {
       const mailResult = await sendMail({

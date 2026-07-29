@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { addAudit } from "@/lib/notify";
 
-// POST /api/auth/change-password  { currentPassword, newPassword } — any signed-in user.
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;

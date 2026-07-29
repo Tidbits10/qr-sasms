@@ -11,8 +11,8 @@ const dateRows = (value: unknown, names = ["createdAt"]) => rows(value).map((raw
   return row;
 });
 
-// A complete Super Admin-only export. It contains password hashes and private
-// records, so it must be downloaded and stored in an encrypted location.
+
+
 export async function GET() {
   const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -23,8 +23,8 @@ export async function GET() {
   return NextResponse.json({ exportedAt: new Date().toISOString(), version: 2, users, requests, appointments, complaints, masterlist, masterlistGroups, settings, faqs, referrals, idApplications, bulletins, tickets, events, forms, memos, notifications, emails, audits, profileChanges, feedback, reminders }, { headers: { "Content-Disposition": `attachment; filename=\"qrsasms-full-backup-${new Date().toISOString().slice(0, 10)}.json\"`, "Cache-Control": "no-store" } });
 }
 
-// Restores an entire verified backup. This is deliberately guarded by an
-// exact confirmation phrase and does not accept legacy partial backups.
+
+
 export async function POST(req: Request) {
   const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;

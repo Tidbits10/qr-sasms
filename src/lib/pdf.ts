@@ -1,7 +1,4 @@
-/**
- * Minimal server-side PDF writer for official QR-SASMS certificates. Keeping
- * this dependency-free makes PDF downloads work on Render as well as locally.
- */
+
 function safe(value: unknown) {
   return String(value ?? "")
     .replace(/[\\()]/g, "\\$&")

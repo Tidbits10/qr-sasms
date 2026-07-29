@@ -5,14 +5,14 @@ import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
 import { isValidSchoolYear, masterlistValidationError } from "@/lib/masterlist-validation";
 
-// POST /api/masterlist/import  { rows: [{ sn, name, email, course, year }], fileName?, scope? }
-// Without `scope`: replaces the entire masterlist — matches the original
-// client behavior of `MASTERLIST = list` after parsing the uploaded CSV.
-// With `scope: { schoolYear, course, year }`: only entries matching that
-// group are replaced, so importing one course/year-level's roster no longer
-// wipes every other group's students.
-// (The CSV itself is still parsed client-side in app.js; only the parsed
-// rows are sent here.)
+
+
+
+
+
+
+
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

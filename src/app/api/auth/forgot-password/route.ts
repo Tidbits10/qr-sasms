@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     return jsonError(400, "Please enter your email address.", "MISSING_EMAIL");
   }
 
-  // A simulated delivery must never be presented to a user as a sent email.
+  
   if (!isEmailConfigured()) {
     return jsonError(
       503,
@@ -31,16 +31,16 @@ export async function POST(req: NextRequest) {
     where: { email: { equals: email, mode: "insensitive" } },
   });
 
-  // Para sa security, huwag sabihing "not found" ang email para iwas-phishing. 
-  // Magbabalik pa rin tayo ng success message kahit wala sa database.
+  
+  
   if (!user) {
     return NextResponse.json({ ok: true, message: "If that email exists, a reset link has been sent." });
   }
 
-  // Gumawa ng secure token at expiry (1 hour mula ngayon)
+  
   const resetToken = crypto.randomBytes(32).toString("hex");
   const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
-  const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+  const resetTokenExpiry = new Date(Date.now() + 3600000); 
 
   await prisma.user.update({
     where: { id: user.id },
@@ -51,16 +51,11 @@ export async function POST(req: NextRequest) {
   });
 
   const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
-
-  // I-send ang email gamit ang sendMail utility na ginamit natin kanina
   const mailResult = await sendMail({
     to: user.email,
     subject: "Password Reset Request - PUP San Pedro SSO",
     text: `Hello ${user.name},\n\nYou requested a password reset for your PUP San Pedro SSO account. Click the link below to reset your password:\n\n${resetUrl}\n\nIf you did not request this, please ignore this email.\n\nThis link expires in 1 hour.`,
-  });
-
-  // I-log sa EmailLog table
-  await prisma.emailLog.create({
+  });  await prisma.emailLog.create({
     data: {
       to: user.email,
       name: user.name,
@@ -73,8 +68,6 @@ export async function POST(req: NextRequest) {
   });
 
   if (!mailResult.ok) {
-    // The link was not delivered, so invalidate it rather than leaving a
-    // usable token that the account holder never received.
     await prisma.user.update({
       where: { id: user.id },
       data: { resetToken: null, resetTokenExpiry: null },

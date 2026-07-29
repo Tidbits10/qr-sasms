@@ -7,7 +7,7 @@ import { fnow } from "@/lib/format";
 import { signDocument } from "@/lib/signature";
 import { normalizeClaimToken } from "@/lib/claim-token";
 
-// GET is retained for staff who manually type a request/claim reference.
+
 export async function GET(req: NextRequest) {
   const auth = await requireSession(["admin", "scanner"]);
   if (auth instanceof NextResponse) return auth;
@@ -29,9 +29,6 @@ export async function GET(req: NextRequest) {
   await addAudit("INFO", `Reference verified — ${found.id} (${found.status}) by ${auth.name}.`);
   return NextResponse.json({ found: true, eligibleForClaim, expired, request: serializeRequest(found) });
 }
-
-// Camera scanners use this endpoint. The opaque QR token is verified and
-// consumed atomically, preventing a photographed code from being reused.
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin", "scanner"]);
   if (auth instanceof NextResponse) return auth;
@@ -51,9 +48,6 @@ export async function POST(req: NextRequest) {
   });
   if (completed.count !== 1) return jsonError(409, "This QR code was already used or is no longer valid.", "QR_ALREADY_USED");
   const updated = await prisma.documentRequest.findUniqueOrThrow({ where: { id: record.id } });
-
-  // The claim is already atomically committed. Do not keep the scanner page
-  // loading while an external SMTP provider is slow or temporarily offline.
   void (async () => {
     try {
     await addAudit("INFO", `${updated.id} claimed by secure QR scan — ${claimRef} issued by ${auth.name}.`);

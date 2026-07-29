@@ -3,7 +3,7 @@ import { notifyStudentByEmail } from "@/lib/notify";
 
 function appointmentDate(dateLabel: string, time: string) { return new Date(`${dateLabel} ${time}`); }
 
-/** Sends real SMTP/Nodemailer reminders due within the next 24 hours. */
+
 export async function sendDueEmailReminders() {
   const now = Date.now(); const tomorrow = now + 24 * 60 * 60 * 1000;
   const [appointments, ready] = await Promise.all([

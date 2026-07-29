@@ -5,9 +5,9 @@ import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
 import { masterlistValidationError } from "@/lib/masterlist-validation";
 
-// GET /api/masterlist          -> { count } — public, used by the "Masterlist
-//                                   loaded — N students" badge on login/register.
-// GET /api/masterlist?full=1   -> full roster (admin only).
+
+
+
 export async function GET(req: NextRequest) {
   const full = req.nextUrl.searchParams.get("full");
   if (!full) {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(rows);
 }
 
-// POST /api/masterlist  { sn, name, email, course, year } — add a single masterlist entry.
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -49,9 +49,6 @@ export async function POST(req: NextRequest) {
   await addAudit("INFO", `Masterlist entry ${sn} added by ${auth.email}.`);
   return NextResponse.json(entry, { status: 201 });
 }
-
-// DELETE /api/masterlist — clears the currently imported CSV masterlist.
-// This does not delete registered user accounts.
 export async function DELETE() {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

@@ -3,11 +3,11 @@ import { requireSession, jsonError } from "@/lib/http";
 import { saveUploadedFile, UploadError } from "@/lib/upload";
 import { allowRequest } from "@/lib/rate-limit";
 
-// POST /api/upload — multipart/form-data with a single "file" field.
-// Used by every module that previously turned an <input type="file"> into a
-// base64 data-URI in the browser (ID application OR, event request
-// supporting docs, complaint attachments, downloadable forms). Now the file
-// is written to disk under /public/uploads and a real URL comes back.
+
+
+
+
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;

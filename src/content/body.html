@@ -4,7 +4,7 @@
 <div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div><div class="orb orb-4"></div><div class="orb orb-5"></div><div class="orb orb-6"></div>
 <div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:2100;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;"></div>
 
-<!--  NAVBAR  -->
+
 <nav id="mainNav" class="glass-nav">
   <div style="max-width:1200px;margin:0 auto;padding:0 20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;">
@@ -30,20 +30,20 @@
   </div>
   <div id="mobileMenuLinks" style="display:flex;flex-direction:column;gap:4px;"></div>
 </div>
-<!-- v3.2: Notification bell dropdown panel -->
+
 <div id="bellPanel" style="display:none;position:fixed;top:64px;right:16px;width:340px;max-width:92vw;z-index:120;background:rgba(255,251,240,.97);border:1px solid rgba(139,26,26,.2);border-radius:14px;box-shadow:0 18px 50px rgba(60,8,8,.25);overflow:hidden;backdrop-filter:blur(14px);"></div>
 
-<!--  PAGE: LOGIN  -->
+
  <div id="authLoadingOverlay" style="position:fixed;inset:0;background:#1a0505;z-index:99999;display:flex;align-items:center;justify-content:center;">
   <div style="color:#F5C518;font-size:14px;font-weight:700;">Loading&hellip;</div>
 </div>
 <div id="page-login" class="page auth-page active" style="align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;">
-  <!-- PUP seal watermark on login background -->
+  
   <div aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;opacity:.13;pointer-events:none;z-index:0;"><img src="/pup-seal.jpg" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center;display:block;"></div>
   <div style="width:100%;max-width:420px;position:relative;z-index:1;">
     <div class="modal-box">
       <div style="text-align:center;margin-bottom:28px;">
-        <!-- PUP Seal -->
+        
         <div style="display:inline-block;margin-bottom:12px;"><img src="/pup-seal.jpg" alt="Polytechnic University of the Philippines San Pedro Campus" style="width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:center;display:block;margin:0 auto;filter:drop-shadow(0 2px 10px rgba(139,26,26,.3));"></div>
         <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(30,5,5,.78);margin-bottom:4px;">Polytechnic University of the Philippines</div>
         <div style="font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(30,5,5,.62);margin-bottom:10px;">San Pedro Campus</div>
@@ -53,7 +53,7 @@
         <div style="font-size:12px;color:rgba(30,5,5,.75);margin-top:10px;">Sign in to continue</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
-        <!-- Username / Student No. -->
+        
         <div>
           <span class="input-label">Student Number or Email</span>
           <div style="position:relative;">
@@ -62,7 +62,7 @@
           </div>
           <div id="loginUserErr" class="field-error"><i class="fa-solid fa-triangle-exclamation" style="margin-right:4px;"></i><span id="loginUserErrMsg">Required</span></div>
         </div>
-        <!-- Password -->
+        
         <div>
           <span class="input-label">Password</span>
           <div style="position:relative;">
@@ -76,17 +76,8 @@
           <label style="display:flex;align-items:center;gap:6px;color:rgba(20,4,4,.75);cursor:pointer;"><input type="checkbox" style="accent-color:#8B1A1A;"/> Remember me</label>
           <a href="#" onclick="doForgotPassword(); return false;" style="color:#D4A017;font-weight:700;text-decoration:none;">Forgot password?</a>
         </div>
-        <!-- Demo hint box -->
-         <!--
-        <div class="info-box" style="background:rgba(255,240,240,.6);border-color:rgba(139,26,26,.2);">
-          <div style="font-size:11px;font-weight:800;color:#8B1A1A;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;"><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Demo credentials</div>
-          <div style="font-size:12px;color:rgba(20,4,4,.80);line-height:1.8;">
-            <b style="color:#1a0505;">Student:</b> 2024-00123-SP-0 / <code style="color:#F5C518;">student123</code><br>
-            <b style="color:#1a0505;">SSO Admin:</b> admin@pup.edu.ph / <code style="color:#F5C518;">Admin@2026!</code><br>
-            <b style="color:#1a0505;">Scanner:</b> scanner@pup.edu.ph / <code style="color:#F5C518;">scan2026</code>
-          </div>
-        </div>
-      -->
+        
+         
         <button id="loginBtn" onclick="doLogin()" class="btn-maroon" style="width:100%;padding:13px;font-size:14px;letter-spacing:.04em;border-radius:14px;">
           <i class="fa-solid fa-arrow-right-to-bracket" style="margin-right:8px;"></i>LOG IN
         </button>
@@ -97,7 +88,7 @@
     </div>
   </div>
 </div>
-<!--  PAGE: REGISTER  -->
+
 <div id="page-register" class="page auth-page" style="align-items:center;justify-content:center;min-height:100vh;padding:24px;">
   <div style="width:100%;max-width:480px;">
     <div class="modal-box" style="max-width:480px;">
@@ -149,7 +140,7 @@
     </div>
   </div>
 </div>
-<!--  PAGE: STUDENT DASHBOARD  -->
+
 <div id="page-student" class="page">
   <div style="max-width:1200px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;">
@@ -160,7 +151,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;"><button onclick="goTo('page-request')" class="btn-gold"><i class="fa-solid fa-plus" style="margin-right:6px;"></i>New Request</button></div>
     </div>
-    <!-- KPI - driven from DB -->
+    
     <div class="grid-4" style="margin-bottom:20px;" id="studentKPI">
       <div class="stat-card ac-maroon"><div class="input-label" style="margin-bottom:0;">All Requests</div><div id="kpiTotal" style="font-size:42px;font-weight:900;color:#1a0505;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">Total submitted</div></div>
       <div class="stat-card ac-gold"><div class="input-label" style="margin-bottom:0;">Pending</div><div id="kpiPending" style="font-size:42px;font-weight:900;color:#F5C518;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">Awaiting processing</div></div>
@@ -168,7 +159,7 @@
       <div class="stat-card ac-blue"><div class="input-label" style="margin-bottom:0;">Next Appointment</div><div style="font-size:20px;font-weight:900;color:#1d4ed8;margin:6px 0 2px;line-height:1.2;">June 25</div><div style="font-size:11px;color:rgba(30,5,5,.75);">APT-007 &middot; 9:30 AM</div></div>
     </div>
     <div class="layout-ms">
-      <!-- Requests Table -->
+      
       <div style="display:flex;flex-direction:column;gap:16px;min-width:0;">
       <div class="glass-card" style="overflow:hidden;">
         <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
@@ -193,10 +184,10 @@
           <div id="studentTablePagination" class="table-pagination-bar"></div>
         </div>
       </div>
-      <!-- Separate card: shown only when the signed-in student is an assigned organization representative. -->
+      
       <div id="studentEventStatusCard" class="glass-card" style="display:none;margin-top:16px;padding:18px;overflow:hidden;"></div>
       </div>
-      <!-- Sidebar -->
+      
       <div style="display:flex;flex-direction:column;gap:16px;">
         <div id="studentAppointmentCard" class="glass-card glass-deep" style="padding:20px;">
           <div class="input-label" style="margin-bottom:12px;"><i class="fa-solid fa-calendar-check" style="color:#D4A017;margin-right:5px;"></i>Next Appointment</div>
@@ -222,7 +213,7 @@
       </div>
     </div>
   </div>
-  <!-- QR Modal -->
+  
   <div id="qrModal" class="modal-overlay">
     <div class="modal-box" style="text-align:center;max-width:340px;">
       <div style="font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8B1A1A;margin-bottom:16px;">&#x2705; APPROVED &mdash; Scan to Verify</div>
@@ -232,7 +223,7 @@
       <button onclick="closeQR()" class="btn-maroon" style="width:100%;margin-top:20px;">Close</button>
     </div>
   </div>
-  <!-- Request Detail Modal -->
+  
   <div id="detailModal" class="modal-overlay">
     <div class="modal-box" style="max-width:420px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -245,7 +236,7 @@
   </div>
 </div>
 
-<!--  PAGE: SUBMIT REQUEST  -->
+
 <div id="page-request" class="page">
   <div style="max-width:640px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;">
@@ -302,7 +293,7 @@
   </div>
 </div>
 
-<!-- PAGE: APPOINTMENT  -->
+
 <div id="page-appointment" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;">
@@ -336,7 +327,7 @@
   </div>
 </div>
 
-<!--  PAGE: ADMIN DASHBOARD  -->
+
 <div id="page-admin" class="page">
   <div style="max-width:1200px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;">
@@ -356,7 +347,7 @@
         <button onclick="goTo('page-scanner')" class="btn-maroon" style="padding:10px 18px;font-size:13px;"><i class="fa-solid fa-qrcode" style="margin-right:6px;"></i>Open Scanner</button>
       </div>
     </div>
-    <!-- KPI - driven from DB -->
+    
     <div class="grid-4" style="margin-bottom:20px;">
       <div class="stat-card ac-maroon"><div class="input-label" style="margin-bottom:0;">Total Requests</div><div id="adminKpiTotal" style="font-size:40px;font-weight:900;color:#1a0505;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">All students</div></div>
       <div class="stat-card ac-gold"><div class="input-label" style="margin-bottom:0;">Pending</div><div id="adminKpiPending" style="font-size:40px;font-weight:900;color:#F5C518;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">Needs attention</div></div>
@@ -364,7 +355,7 @@
       <div class="stat-card ac-red"><div class="input-label" style="margin-bottom:0;">Rejected</div><div id="adminKpiRejected" style="font-size:40px;font-weight:900;color:#991b1b;margin:6px 0 2px;line-height:1;">0</div><div style="font-size:11px;color:rgba(30,5,5,.75);">rejection rate</div></div>
     </div>
     <div id="adminActivity" class="glass-card" style="padding:14px 18px;margin-bottom:20px;display:none;"></div>
-    <!-- Charts + Queue -->
+    
     <div class="layout-cs" style="margin-bottom:20px;">
       <div class="glass-card" style="padding:22px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -384,7 +375,7 @@
           </div>
         </div>
       </div>
-      <!-- Queue -->
+      
       <div class="glass-card" style="padding:20px;">
         <div style="font-size:15px;font-weight:800;color:#1a0505;margin-bottom:10px;"><i class="fa-solid fa-users-line" style="color:#D4A017;margin-right:8px;"></i>Today's Appointments</div>
         <div style="position:relative;margin-bottom:10px;">
@@ -401,9 +392,9 @@
         <button onclick="viewAllAppointments()" class="btn-ghost" style="width:100%;padding:8px 12px;font-size:11px;margin-top:9px;"><i class="fa-solid fa-list" style="margin-right:5px;"></i>View All Appointments</button>
       </div>
     </div>
-    <!-- v3.2: Account Approvals -->
+    
     <div id="acctApprovalsWrap" style="margin-bottom:20px;"></div>
-    <!-- Processing Table -->
+    
     <div id="allAppointments" class="glass-card" style="overflow:hidden;margin-bottom:20px;">
       <div style="padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;">
         <div style="font-size:15px;font-weight:800;color:#1a0505;"><i class="fa-solid fa-inbox" style="color:#D4A017;margin-right:8px;"></i>Processing Queue</div>
@@ -442,7 +433,7 @@
         <div id="adminTablePagination" class="table-pagination-bar"></div>
       </div>
     </div>
-    <!-- Audit Logs -->
+    
     <details class="glass-card" style="overflow:hidden;">
       <summary style="padding:16px 20px;font-size:13px;font-weight:800;color:rgba(20,4,4,.80);display:flex;align-items:center;justify-content:space-between;" onmouseover="this.style.color='#2d0a0a'" onmouseout="this.style.color='rgba(80,20,20,.5)'">
         <span><i class="fa-solid fa-terminal" style="margin-right:8px;color:rgba(30,5,5,.55);"></i>System Audit Logs</span>
@@ -450,7 +441,7 @@
       </summary>
       <div id="auditLog" style="padding:0 20px 20px;max-height:180px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.8;color:rgba(30,5,5,.75);"></div>
     </details>
-    <!-- Email Notifications / Outbox -->
+    
     <details class="glass-card" style="overflow:hidden;margin-top:16px;" open>
       <summary style="padding:16px 20px;font-size:13px;font-weight:800;color:rgba(20,4,4,.80);display:flex;align-items:center;justify-content:space-between;">
         <span><i class="fa-solid fa-envelope" style="margin-right:8px;color:#8B1A1A;"></i>Email Notifications <span id="emailModeBadge" style="font-size:10px;font-weight:700;margin-left:8px;"></span></span>
@@ -459,7 +450,7 @@
       <div id="emailOutbox" style="padding:0 20px 20px;max-height:240px;overflow-y:auto;font-size:12px;line-height:1.5;color:rgba(30,5,5,.78);"></div>
     </details>
   </div>
-  <!-- Admin request detail modal -->
+  
   <div id="adminDetailModal" class="modal-overlay">
     <div class="modal-box" style="max-width:440px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -471,7 +462,7 @@
     </div>
   </div>
 
-  <!-- Full appointment list, opened from Today's Appointments -->
+  
   <div id="allQueueModal" class="modal-overlay" onclick="if(event.target===this)closeAllAppointments()">
     <div class="modal-box" style="max-width:720px;width:100%;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -482,7 +473,7 @@
     </div>
   </div>
 
-  <!-- v3.2.1: Reason for Rejection modal -->
+  
   <div id="rejectModal" class="modal-overlay">
     <div class="modal-box" style="max-width:420px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -501,7 +492,7 @@
   </div>
 </div>
 
-<!--  PAGE: STUDENT SERVICES HUB (v3)  -->
+
 <div id="page-services" class="page">
   <div style="max-width:1000px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;display:flex;align-items:flex-start;gap:12px;">
@@ -513,7 +504,7 @@
   </div>
 </div>
 
-<!--  PAGE: ADMIN MANAGE HUB (v3)  -->
+
 <div id="page-manage" class="page">
   <div style="max-width:1000px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;display:flex;align-items:flex-start;gap:12px;">
@@ -525,7 +516,7 @@
   </div>
 </div>
 
-<!--  PAGE: REFERRAL & INTERVENTION (v3)  -->
+
 <div id="page-referral" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -539,7 +530,7 @@
   </div>
 </div>
 
-<!--  PAGE: ID APPLICATION (v3)  -->
+
 <div id="page-idapp" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -553,7 +544,7 @@
   </div>
 </div>
 
-<!--  PAGE: MONTHLY BULLETIN (v3)  -->
+
 <div id="page-bulletin" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -567,7 +558,7 @@
   </div>
 </div>
 
-<!--  PAGE: HELP DESK (v3)  -->
+
 <div id="page-helpdesk" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -581,7 +572,7 @@
   </div>
 </div>
 
-<!--  PAGE: FAQ (v3)  -->
+
 <div id="page-faq" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -595,7 +586,7 @@
   </div>
 </div>
 
-<!--  PAGE: EVENT REQUEST (v3)  -->
+
 <div id="page-events2" class="page">
   <div style="max-width:950px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -609,7 +600,7 @@
   </div>
 </div>
 
-<!--  PAGE: COMPLAINTS (v3)  -->
+
 <div id="page-complaint" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -623,7 +614,7 @@
   </div>
 </div>
 
-<!--  PAGE: DOWNLOADABLE FORMS (v3)  -->
+
 <div id="page-forms" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -637,7 +628,7 @@
   </div>
 </div>
 
-<!--  PAGE: EMAIL BLAST / MEMO (v3, admin only)  -->
+
 <div id="page-memo" class="page">
   <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 16px;display:flex;align-items:center;gap:10px;">
@@ -652,7 +643,7 @@
 </div>
 
 
-<!--  PAGE: QR SCANNER  -->
+
 <div id="page-scanner" class="page">
   <div style="max-width:600px;margin:0 auto;padding:0 20px 40px;">
     <div style="padding:28px 0 20px;">
@@ -667,10 +658,10 @@
 
     <div style="background: rgba(240,228,228,.7); border: 1px solid rgba(139,26,26,.15); border-radius: 20px; overflow: hidden; position: relative; height: 280px; margin-bottom: 15px;">
     
-    <!-- Mismong camera feed sa loob ng box -->
+    
     <div id="reader" style="width: 100%; height: 100%; position: absolute; inset: 0;"></div>
 
-    <!-- Mga pulang corner frames na nakapatong sa ibabaw -->
+    
     <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
         <div class="qr-scanner-frame">
             <div class="qr-corner tl"></div>
@@ -691,7 +682,7 @@
     </button>
 </div>
 
-    <!-- v3.1: Verify by Reference (REQ or CLM) -->
+    
     <div class="glass-card" style="padding:20px;margin-bottom:16px;">
       <div style="font-size:14px;font-weight:800;color:#1a0505;margin-bottom:4px;"><i class="fa-solid fa-magnifying-glass-chart" style="color:#8B1A1A;margin-right:7px;"></i>Verify by Reference</div>
       <div style="font-size:11px;color:rgba(30,5,5,.6);margin-bottom:12px;">Enter a Request Ref (REQ-&hellip;) or Claiming Ref (CLM-&hellip;) to verify authenticity, view claim details, or complete a claim.</div>

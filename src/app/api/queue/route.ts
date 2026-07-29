@@ -17,7 +17,6 @@ function validAppointmentDate(label: string) {
   const normalized = parsed.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   if (normalized !== label) return false;
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  // Students can choose only the current month or the immediately next month.
   const maxDate = new Date(today.getFullYear(), today.getMonth() + 2, 0);
   return parsed >= today && parsed <= maxDate && parsed.getDay() !== 0 && parsed.getDay() !== 6;
 }
@@ -25,12 +24,6 @@ function validAppointmentDate(label: string) {
 function serialize(q: { code: string; studentId: string; name: string; time: string; dateLabel: string; served: boolean }) {
   return { q: q.code, studentId: q.studentId, name: q.name, time: q.time, dateLabel: q.dateLabel, served: q.served };
 }
-
-// GET /api/queue          -> full list, admin only (matches the original:
-//                             the queue card only ever rendered in the admin dashboard).
-// GET /api/queue?count=1  -> { count } for any signed-in user — used by the
-//                             student appointment page to preview "your
-//                             appointment number will be about N" before booking.
 export async function GET(req: NextRequest) {
   if (req.nextUrl.searchParams.get("mine")) {
     const auth = await requireSession(["student"]);
@@ -61,8 +54,6 @@ export async function GET(req: NextRequest) {
   const rows = await prisma.queueEntry.findMany({ orderBy: { createdAt: "asc" } });
   return NextResponse.json(rows.map(serialize));
 }
-
-// POST /api/queue  { dateLabel, time } — student books an appointment slot.
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

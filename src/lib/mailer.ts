@@ -13,9 +13,9 @@ function getTransporter(): Transporter | null {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === "true",
-    // Render's outbound network commonly has IPv4 but no usable IPv6 route.
-    // Gmail DNS returns IPv6 first on some runs, causing ENETUNREACH unless
-    // Nodemailer is explicitly told to use IPv4.
+    
+    
+    
     family: 4,
     connectionTimeout: 15_000,
     greetingTimeout: 15_000,
@@ -33,12 +33,7 @@ export type SendMailResult =
   | { ok: false; mode: "FAILED"; error: string }
   | { ok: false; mode: "NO_EMAIL"; error: string };
 
-/**
- * Sends a real email via SMTP if SMTP_HOST/SMTP_USER/SMTP_PASS are set in
- * .env; otherwise runs in SIMULATED mode (caller still records an EmailLog
- * row, just tagged SIMULATED instead of SENT). No email is ever silently
- * dropped without leaving a trace in the outbox.
- */
+
 export async function sendMail(opts: {
   to: string | null | undefined;
   subject: string;
@@ -49,7 +44,7 @@ export async function sendMail(opts: {
   }
   const t = getTransporter();
   if (!t) {
-    // SIMULATED mode: no SMTP configured yet.
+    
     return { ok: true, mode: "SIMULATED" };
   }
   try {

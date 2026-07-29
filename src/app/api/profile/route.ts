@@ -14,8 +14,8 @@ export async function GET() {
   return NextResponse.json({ user, pending });
 }
 
-// Student updates are deliberately queued for staff approval rather than
-// altering the identity record immediately.
+
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

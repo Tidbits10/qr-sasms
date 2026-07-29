@@ -4,10 +4,10 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 import { genId, withTs, withTsList } from "@/lib/format";
 
-// GET /api/modules/complaints — confidential: students see only their own,
-// admin sees all. (The original client filtered this on the frontend only;
-// here it's enforced server-side so one student's browser never even
-// receives another student's confidential complaint.)
+
+
+
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -16,7 +16,7 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// POST /api/modules/complaints  { category, details, attName, attUrl }
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

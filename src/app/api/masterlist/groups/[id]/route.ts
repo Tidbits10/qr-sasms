@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 
-// PATCH /api/masterlist/groups/:id  { ownerId: string | null } — assign or
-// clear the staff owner for a group. Super Admin only — matches how staff
-// accounts themselves are managed.
+
+
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;

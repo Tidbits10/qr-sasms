@@ -11,7 +11,7 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// POST /api/modules/forms  { title, cat, fileName, url } — admin uploads (file already sent to /api/upload).
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

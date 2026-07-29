@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
 
-/** Server-generated integrity signature for issued approval/claim documents. */
+
 export function signDocument(reference: string, studentId: string, status: string) {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET is required for document signatures.");

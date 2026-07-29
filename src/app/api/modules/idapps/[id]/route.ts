@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification, notifyStudentByEmail } from "@/lib/notify";
 import { withTs } from "@/lib/format";
 
-// PATCH /api/modules/idapps/:id  { status, remarks } — admin updates.
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

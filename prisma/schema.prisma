@@ -1,8 +1,8 @@
-// QR-SASMS — Prisma schema
-// Real PostgreSQL-backed data model for the PUP San Pedro SSO portal.
-// Status fields are kept as plain strings (matching the exact labels the
-// original frontend renders, e.g. "Ready to Claim") rather than Prisma enums,
-// so API responses need zero translation before reaching the client.
+
+
+
+
+
 
 generator client {
   provider = "prisma-client-js"
@@ -26,16 +26,16 @@ model MasterlistEntry {
   name       String   @default("")
   email      String   @default("")
   course     String   @default("")
-  year       String   @default("") // year level, e.g. "2nd Year"
-  schoolYear String   @default("") // academic year, e.g. "2025-2026"
+  year       String   @default("") 
+  schoolYear String   @default("") 
   createdAt  DateTime @default(now())
 }
 
-// A (schoolYear, course, year-level) group within the masterlist, with an
-// optional staff owner (Admin or Super Admin) responsible for it. Not a hard
-// foreign key to MasterlistEntry — group membership is computed by matching
-// those three fields, matching how studentId elsewhere in this schema is a
-// plain string reference rather than a relation.
+
+
+
+
+
 model MasterlistGroup {
   id         String   @id @default(uuid())
   schoolYear String
@@ -49,7 +49,7 @@ model MasterlistGroup {
 }
 
 model DocumentRequest {
-  id           String   @id // REQ-YYYY-NNN
+  id           String   @id 
   studentId    String
   studentName  String
   doc          String
@@ -57,13 +57,13 @@ model DocumentRequest {
   purpose      String
   copies       Int      @default(1)
   notes        String   @default("")
-  status       String   @default("Pending") // Pending | Approved | Ready to Claim | Rejected | Completed
+  status       String   @default("Pending") 
   rejectReason String?
   rejectedAt   String?
   rejectedBy   String?
-  claimRef     String?  @unique // CLM-YYYY-NNNNN
-  // Opaque, random, one-time QR release token. It intentionally contains no
-  // student or document information and is invalidated once the claim closes.
+  claimRef     String?  @unique 
+  
+  
   claimToken       String?   @unique
   claimTokenExpiry DateTime?
   claimedAt    String?
@@ -79,7 +79,7 @@ model DocumentRequest {
 
 model QueueEntry {
   id        String   @id @default(uuid())
-  code      String   @unique // APT-004
+  code      String   @unique 
   studentId String
   name      String
   time      String
@@ -94,7 +94,7 @@ model QueueEntry {
 
 model AuditLog {
   id        String   @id @default(uuid())
-  type      String // INFO | WARN | ERROR
+  type      String 
   msg       String
   createdAt DateTime @default(now())
 
@@ -108,7 +108,7 @@ model EmailLog {
   ref       String
   doc       String
   status    String
-  mode      String // SENT | SIMULATED | FAILED | NO_EMAIL
+  mode      String 
   error     String?
   createdAt DateTime @default(now())
 
@@ -117,7 +117,7 @@ model EmailLog {
 
 model Notification {
   id        String   @id @default(uuid())
-  target    String // 'admin' | 'students' | a specific student number
+  target    String 
   title     String
   body      String
   read      Boolean  @default(false)
@@ -163,7 +163,7 @@ model Bulletin {
   category  String
   body      String
   featured  Boolean   @default(false)
-  status    String    @default("Published") // Published | Archived
+  status    String    @default("Published") 
   publishAt DateTime?
   updatedTs DateTime?
   createdAt DateTime  @default(now())
@@ -175,7 +175,7 @@ model Ticket {
   name      String
   category  String
   subject   String
-  status    String   @default("Open") // Open | Answered | Closed
+  status    String   @default("Open") 
   msgs      Json     @default("[]")
   createdAt DateTime @default(now())
 
@@ -261,7 +261,7 @@ model Complaint {
   attUrl          String?
   status          String   @default("Submitted")
   note            String   @default("")
-  confidentiality String   @default("Standard") // Standard | Restricted | Strictly Confidential
+  confidentiality String   @default("Standard") 
   assignedTo      String?
   staffNotes      String   @default("")
   createdAt       DateTime @default(now())
@@ -290,17 +290,17 @@ model Memo {
 
 model User {
   id               String    @id @default(uuid())
-  studentId        String?   @unique // student number, e.g. 2024-00123-SP-0 (null for admin/scanner)
+  studentId        String?   @unique 
   email            String    @unique
   passwordHash     String
   role             Role
   name             String
   course           String?
   year             String?
-  approved         Boolean   @default(true) // students start false until an SSO admin approves them
-  active           Boolean   @default(true) // staff may be deactivated by a Super Admin
-  resetToken       String?   // Para sa forgot password token
-  resetTokenExpiry DateTime? // Para sa expiry ng reset token
+  approved         Boolean   @default(true) 
+  active           Boolean   @default(true) 
+  resetToken       String?   
+  resetTokenExpiry DateTime? 
   createdAt        DateTime  @default(now())
 
   @@index([studentId])
@@ -321,7 +321,7 @@ model ProfileChange {
   email     String
   course    String?
   year      String?
-  status    String   @default("Pending") // Pending | Approved | Rejected
+  status    String   @default("Pending") 
   createdAt DateTime @default(now())
 
   @@index([userId])

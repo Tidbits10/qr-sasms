@@ -4,9 +4,9 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 import { genId, serializeBulletin } from "@/lib/format";
 
-// GET /api/modules/bulletins — admin gets everything (drafts/archived
-// included, for the manager view + live preview); students only get posts
-// that are Published and already due to publish.
+
+
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -27,7 +27,7 @@ export async function GET() {
   return NextResponse.json(rows.map(serializeBulletin));
 }
 
-// POST /api/modules/bulletins  { title, category, body, featured, publishAt } — admin only.
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

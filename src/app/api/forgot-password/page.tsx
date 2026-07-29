@@ -1,4 +1,4 @@
-"client-side" // o ordinaryong client component sa Next.js
+"client-side" 
 "use client";
 
 import { useState } from "react";

@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification, notifyStudentByEmail } from "@/lib/notify";
 import { withTs } from "@/lib/format";
 
-// POST /api/modules/tickets/:id/close — admin closes the ticket.
+
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

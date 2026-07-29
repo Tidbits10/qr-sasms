@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { serializeBulletin } from "@/lib/format";
 
-// PATCH /api/modules/bulletins/:id  { title, category, body, featured, publishAt } — admin edits.
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json(serializeBulletin(updated));
 }
 
-// DELETE /api/modules/bulletins/:id — admin only.
+
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

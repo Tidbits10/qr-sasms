@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 import { DOC_LABELS, nextRequestId, serializeRequest } from "@/lib/requests";
 
-// GET /api/requests — students see only their own; admins/scanners see all.
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -16,7 +16,7 @@ export async function GET() {
   });
 }
 
-// POST /api/requests — students submit a new document request.
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

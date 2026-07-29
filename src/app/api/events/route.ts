@@ -4,9 +4,9 @@ import { requireSession } from "@/lib/http";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-// A signed-in client keeps one lightweight SSE connection. Every event tells
-// the current page to re-fetch its authorized data; no records are sent over
-// the stream and no page reload is needed.
+
+
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;

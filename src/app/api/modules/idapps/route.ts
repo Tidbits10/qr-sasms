@@ -12,7 +12,7 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// POST /api/modules/idapps  { type, reason, orName, orUrl, affidavitName?, affidavitUrl? }
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

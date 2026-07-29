@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/http";
 import { fnow } from "@/lib/format";
 
-// GET /api/audit — last 200 audit log entries, admin only.
+
 export async function GET() {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

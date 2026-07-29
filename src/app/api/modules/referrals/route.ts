@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 import { genId, fnow, withTsList, withTs } from "@/lib/format";
 
-// GET /api/modules/referrals — students see only their own; admin sees all.
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -14,7 +14,7 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// POST /api/modules/referrals  { category, details } — student submits.
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

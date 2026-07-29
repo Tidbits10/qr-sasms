@@ -5,7 +5,7 @@ import { addAudit, addNotification, notifyStudentByEmail } from "@/lib/notify";
 import { fnow, withTs } from "@/lib/format";
 import type { Prisma } from "@prisma/client";
 
-// PATCH /api/modules/referrals/:id  { status, remarks } — admin updates.
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

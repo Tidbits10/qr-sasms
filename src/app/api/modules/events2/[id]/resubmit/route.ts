@@ -5,7 +5,7 @@ import { addAudit, addNotification } from "@/lib/notify";
 import { fnow, withTs } from "@/lib/format";
 import type { Prisma } from "@prisma/client";
 
-// POST /api/modules/events2/:id/resubmit — student revises a "Needs Revision" request.
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;

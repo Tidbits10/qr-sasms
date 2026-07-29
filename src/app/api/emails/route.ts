@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/http";
 import { fnow } from "@/lib/format";
 
-// GET /api/emails — last 100 outgoing email attempts (admin "Email Outbox").
+
 export async function GET() {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

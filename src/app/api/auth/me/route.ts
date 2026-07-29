@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { clearSessionCookie, getSession, toClientUser } from "@/lib/auth";
 
-// Restores the client-side `session` object on page reload from the
-// httpOnly cookie — the original frontend never persisted the session at
-// all (a full refresh dropped you back to the login screen); this is a
-// genuine improvement now that there's a real backend behind it.
+
+
+
+
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ user: null });

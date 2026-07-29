@@ -3,12 +3,12 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 
 export const SESSION_COOKIE = "qrsasms_session";
-const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; 
 
 function secretKey() {
   const secret = process.env.AUTH_SECRET;
   if (!secret) {
-    // Fail loudly rather than silently signing tokens with an empty key.
+    
     throw new Error(
       "AUTH_SECRET is not set. Copy .env.example to .env and set AUTH_SECRET."
     );
@@ -16,10 +16,10 @@ function secretKey() {
   return new TextEncoder().encode(secret);
 }
 
-// What we store in the signed session cookie. Kept intentionally small.
+
 export type SessionPayload = {
-  uid: string; // User.id (uuid)
-  studentId: string | null; // student number, or null for admin/scanner
+  uid: string; 
+  studentId: string | null; 
   email: string;
   name: string;
   role: "student" | "admin" | "super_admin" | "scanner";
@@ -56,7 +56,7 @@ export async function verifySession(
   }
 }
 
-/** Reads and verifies the session cookie for the current request (Route Handlers, Server Components). */
+
 export async function getSession(): Promise<SessionPayload | null> {
   const store = cookies();
   const token = store.get(SESSION_COOKIE)?.value;
@@ -74,12 +74,6 @@ export async function setSessionCookie(payload: SessionPayload) {
     maxAge: SESSION_TTL_SECONDS,
   });
 }
-
-// Public client-facing shape of a logged-in user. `id` mirrors the original
-// frontend's `session.id`: the student number for students (so existing
-// `r.studentId === session.id` comparisons in the rewired client code keep
-// working unchanged), or the email for staff accounts (never compared
-// against anything on the client).
 export function toClientUser(u: {
   studentId: string | null;
   email: string;

@@ -20,8 +20,8 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// A masterlist email blast only targets entries that do not have a registered
-// account. When selected, its course/year filter is matched against CSV data.
+
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["super_admin"]);
   if (auth instanceof NextResponse) return auth;

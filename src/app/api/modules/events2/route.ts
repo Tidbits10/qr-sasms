@@ -12,7 +12,7 @@ export async function GET() {
   return NextResponse.json(withTsList(rows));
 }
 
-// POST /api/modules/events2 — new event request (student org).
+
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["student"]);
   if (auth instanceof NextResponse) return auth;
@@ -29,9 +29,9 @@ export async function POST(req: NextRequest) {
     return jsonError(400, "Please complete all required fields.", "MISSING_FIELDS");
   }
 
-  // Event submission is a permission of an assigned student officer, not a
-  // general student capability.  The organization/adviser are always taken
-  // from the server record, never from form fields supplied by the browser.
+  
+  
+  
   const representative = await prisma.organizationRepresentative.findFirst({
     where: {
       organizationId,

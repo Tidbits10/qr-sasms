@@ -12,7 +12,7 @@ function daysAgo(n: number): Date {
 async function main() {
   console.log("Seeding QR-SASMS database...");
 
-  // ── Users (matches the original demo accounts) ──────────────────────
+  
   const studentPass = await bcrypt.hash("student123", 10);
   const adminPass = await bcrypt.hash("Admin@2026!", 10);
   const scannerPass = await bcrypt.hash("scan2026", 10);
@@ -56,7 +56,7 @@ async function main() {
     },
   });
 
-  // ── Masterlist (SSO-imported roster used to gate self-registration) ──
+  
   const masterlist: Array<{ sn: string; name: string; email: string }> = [
     { sn: "2024-00123-SP-0", name: "Juan dela Cruz", email: "student@pup.edu.ph" },
     { sn: "2024-00091-SP-0", name: "Maria Santos", email: "maria.santos@iskolarngbayan.pup.edu.ph" },
@@ -64,14 +64,14 @@ async function main() {
     { sn: "2024-00115-SP-0", name: "Ana Flores", email: "ana.flores@iskolarngbayan.pup.edu.ph" },
     { sn: "2024-00134-SP-0", name: "Liza Manguba", email: "liza.manguba@iskolarngbayan.pup.edu.ph" },
     { sn: "2024-00145-SP-0", name: "Rico Aguinaldo", email: "rico.aguinaldo@iskolarngbayan.pup.edu.ph" },
-    // Not yet registered — use this one to try the "Create Account" flow.
+    
     { sn: "2024-00200-SP-0", name: "Carla Dizon", email: "carla.dizon@iskolarngbayan.pup.edu.ph" },
   ];
   for (const m of masterlist) {
     await prisma.masterlistEntry.upsert({ where: { sn: m.sn }, update: m, create: m });
   }
 
-  // ── Document requests (demo history so the dashboards aren't empty) ──
+  
   const requests: Array<{
     id: string;
     studentId: string;
@@ -120,8 +120,6 @@ async function main() {
       },
     });
   }
-
-  // ── Appointment queue (today) ─────────────────────────────────────────
   const queue: Array<{ code: string; studentId: string; name: string; time: string; served: boolean }> = [
     { code: "APT-004", studentId: "2024-00091-SP-0", name: "Maria Santos", time: "8:00 AM", served: true },
     { code: "APT-005", studentId: "2024-00102-SP-0", name: "Pedro Reyes", time: "8:30 AM", served: true },
@@ -138,8 +136,6 @@ async function main() {
       create: { ...q, dateLabel: todayLabel },
     });
   }
-
-  // ── Audit log ──────────────────────────────────────────────────────
   const auditCount = await prisma.auditLog.count();
   if (auditCount === 0) {
     await prisma.auditLog.createMany({
@@ -151,8 +147,6 @@ async function main() {
       ],
     });
   }
-
-  // ── Default FAQs ───────────────────────────────────────────────────
   const faqCount = await prisma.faq.count();
   if (faqCount === 0) {
     await prisma.faq.createMany({

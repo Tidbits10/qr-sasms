@@ -5,7 +5,7 @@ import { addNotification, notifyStudentByEmail } from "@/lib/notify";
 import { fnow, withTs } from "@/lib/format";
 import type { Prisma } from "@prisma/client";
 
-// POST /api/modules/tickets/:id/reply  { text } — student or admin reply.
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["student", "admin"]);
   if (auth instanceof NextResponse) return auth;

@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 import { genId } from "@/lib/format";
 
-// GET /api/modules/faqs — public reference data, any signed-in role.
+
 export async function GET() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;
@@ -16,8 +16,6 @@ export async function GET() {
       : faq)
     .filter((faq) => !unsupportedDocument.test(`${faq.q} ${faq.a}`)));
 }
-
-// POST /api/modules/faqs  { cat, q, a } — admin only.
 export async function POST(req: NextRequest) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

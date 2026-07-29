@@ -25,7 +25,7 @@ function readSettings(rows: { key: string; value: string }[]) {
 }
 
 export async function GET(req: NextRequest) {
-  // Registration is public, but it only needs the configured course names.
+  
   if (req.nextUrl.searchParams.get("public") === "registration") {
     const setting = await prisma.systemSetting.findUnique({ where: { key: "courses" } });
     let courses = DEFAULT_SETTINGS.courses;
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         if (Array.isArray(saved) && saved.length) courses = saved;
       }
     } catch {
-      // Keep registration available using the default list if old setting data is invalid.
+      
     }
     return NextResponse.json({ courses });
   }

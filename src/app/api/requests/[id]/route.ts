@@ -35,8 +35,6 @@ function statusMessage(status: string, req: { doc: string; id: string; rejectRea
       return `The status of your request for "${req.doc}" (Ref ${req.id}) is now: ${status}.`;
   }
 }
-
-// PATCH /api/requests/:id  { status, reason? }  — admin only
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -56,9 +54,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!ALLOWED_TRANSITIONS[existing.status]?.includes(newStatus)) {
     return jsonError(409, `Cannot change a ${existing.status} request to ${newStatus}.`, "INVALID_STATUS_TRANSITION");
   }
-
-  // A QR code represents a release authorization, so it can only be used once:
-  // only a request currently marked Ready to Claim may be completed.
   if (newStatus === "Completed" && existing.status !== "Ready to Claim") {
     return jsonError(409, existing.status === "Completed" ? "This QR code has already been used to release the document." : "Only requests marked Ready to Claim can be released.", "INVALID_CLAIM_STATE");
   }
@@ -82,10 +77,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   if (["Approved", "Ready to Claim", "Completed"].includes(newStatus)) data.signature = signDocument(existing.id, existing.studentId, newStatus);
-
-  // Issue a fresh opaque QR release authorization only when a document is
-  // ready. Any old code is replaced, expires after 72 hours, and cannot reveal
-  // personal data when photographed or forwarded.
   if (newStatus === "Ready to Claim") {
     data.claimToken = createClaimToken();
     data.claimTokenExpiry = claimTokenExpiry();
@@ -102,9 +93,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const updated = await prisma.documentRequest.update({ where: { id }, data });
-
-  // The status is already saved. Non-critical notification failures must not
-  // make the client treat this successful state transition as a failed action.
   try {
   await addAudit("INFO", `${id} status changed from ${oldStatus} to ${newStatus} by ${auth.name}.`);
   if (newStatus === "Completed" && data.claimRef) {

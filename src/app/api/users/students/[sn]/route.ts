@@ -4,9 +4,9 @@ import { requireSession, jsonError } from "@/lib/http";
 import { addAudit, addNotification } from "@/lib/notify";
 import { normSN } from "@/lib/format";
 
-// PATCH /api/users/students/:sn  { active: boolean } — hold or reactivate a student account.
-// Deactivated accounts are blocked at login and mid-session (see requireSession),
-// but their historical requests/appointments/complaints are left untouched.
+
+
+
 export async function PATCH(req: NextRequest, { params }: { params: { sn: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

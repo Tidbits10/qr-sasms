@@ -1,18 +1,6 @@
-/* ══════════════════════════════════════════════════════════════
-   QR-SASMS — client logic, rewired to a real Next.js + Prisma + Postgres
-   backend (see /src/app/api/**). Every render/DOM function below produces
-   the exact same HTML the original localStorage-only prototype did — only
-   the data layer changed: instead of reading/writing localStorage arrays,
-   each page load fetches fresh data from the API, and every action (submit
-   a request, approve/reject, reply to a ticket, etc.) calls a real API
-   endpoint. The server is the single source of truth; audit logging,
-   email notifications, and in-app bell notifications are now all created
-   server-side as a side effect of those calls.
-══════════════════════════════════════════════════════════════ */
 
-/* ──────────────────────────────────────────
-   FETCH HELPERS
-──────────────────────────────────────────── */
+
+
 async function api(url, opts = {}) {
   const init = { method: opts.method || "GET", credentials: "same-origin" };
   if (init.method === "GET") init.cache = "no-store";
@@ -30,7 +18,7 @@ async function api(url, opts = {}) {
   return { ok: res.ok, status: res.status, data, error: data && data.error ? data.error : null };
 }
 
-/** Uploads a single <input type="file"> to /api/upload. Returns {url,fileName} or null. */
+
 async function uploadFile(inputEl) {
   const f = inputEl.files && inputEl.files[0];
   if (!f) return { url: null, fileName: null };
@@ -60,11 +48,7 @@ async function uploadFile(inputEl) {
   return { url: data.url, fileName: data.fileName };
 }
 
-/* ──────────────────────────────────────────
-   IN-MEMORY CACHES (populated from the API on navigation; every render
-   function below reads from these exactly like the original read from
-   localStorage-backed globals)
-──────────────────────────────────────────── */
+
 let DB = [];              // document requests
 let queueData = [];       // appointment queue (admin view)
 let auditLogs = [];       // audit trail (admin view)
@@ -129,9 +113,7 @@ const DOC_REQUIREMENTS = {
   other: ["Valid PUP student ID", "Describe the requested document in Additional Notes"],
 };
 
-/* ──────────────────────────────────────────
-   SESSION
-──────────────────────────────────────────── */
+
 let session = null; // { id, email, name, role, course, year }
 let copies = 1;
 let selectedDate = null;
@@ -167,9 +149,7 @@ async function restoreSession() {
   }
 }
 
-/* ──────────────────────────────────────────
-   AUTH
-──────────────────────────────────────────── */
+
 async function doLogin() {
   const userVal = document.getElementById("loginUser").value.trim();
   const passVal = document.getElementById("loginPass").value;
@@ -261,10 +241,6 @@ async function handleRegister() {
   if (submitButton) { submitButton.disabled = false; submitButton.innerHTML = '<i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>CREATE ACCOUNT'; }
   setTimeout(() => goTo("page-login"), 1200);
 }
-
-// Login and registration pages stay mounted while the application switches
-// screens. Clear their DOM state explicitly so credentials and unfinished
-// registration details never appear when a visitor returns to either page.
 function clearLoginForm() {
   ["loginUser", "loginPass"].forEach((id) => {
     const field = document.getElementById(id);
@@ -292,9 +268,7 @@ function clearRegisterForm() {
   if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>CREATE ACCOUNT'; }
 }
 
-/* ──────────────────────────────────────────
-   NAVIGATION
-──────────────────────────────────────────── */
+
 async function goTo(pageId) {
   const publicPages = ["page-login", "page-register"];
   if (!publicPages.includes(pageId) && !session) {
@@ -326,8 +300,6 @@ async function goTo(pageId) {
   document.querySelectorAll(".page").forEach((p) => { p.classList.remove("active"); p.style.display = "none"; });
   const p = document.getElementById(pageId);
   p.classList.add("active");
-  // Auth screens use a flex layout to keep their card centered. Setting every
-  // page to block here previously overrode that layout after logout/navigation.
   p.style.display = publicPages.includes(pageId) ? "flex" : "block";
   const savedScroll = window.__qrsPageScroll[pageId] || 0;
   requestAnimationFrame(() => window.scrollTo({ top: savedScroll, left: 0, behavior: "auto" }));
@@ -335,9 +307,6 @@ async function goTo(pageId) {
   const noNav = ["page-login", "page-register"];
   document.getElementById("mainNav").style.display = noNav.includes(pageId) ? "none" : "block";
   if (noNav.includes(pageId)) closeMobileMenu();
-
-  // Preload whatever data this page needs, then render (mirrors the
-  // original's synchronous render-from-cache functions below).
   if (pageId === "page-student") { await Promise.all([loadRequests(), loadModule("events2"), loadMyOrganizations()]); renderStudentPage(); }
   if (pageId === "page-admin") {
     await Promise.all([loadRequests(), loadQueueData(), loadAuditLog(), loadEmailLog(), loadEmailStatus(), loadPendingAccounts(), refreshMasterlistStatus(), loadAdminActivity()]);
@@ -363,9 +332,7 @@ async function goTo(pageId) {
 }
 async function goBack() { await goTo(prevPage || (isAdmin() ? "page-admin" : "page-student")); }
 
-/* ──────────────────────────────────────────
-   NAVBAR
-──────────────────────────────────────────── */
+
 async function updateNav(pageId) {
   if (!session) return;
   await loadNotifs();
@@ -442,9 +409,7 @@ async function signOut() {
   showToast("Signed out successfully.");
 }
 
-/* ──────────────────────────────────────────
-   STUDENT PAGE
-──────────────────────────────────────────── */
+
 function renderStudentPage() {
   if (!session || session.role !== "student") return;
   document.getElementById("studentWelcomeName").textContent = session.name;
@@ -472,8 +437,6 @@ function renderStudentEventStatus() {
   const mine = (MOD.events2 || []).filter((event) => event.sn === session.id).slice().reverse();
   const eventPage = getModulePage("student-event-status", mine);
   const canSubmitEvent = MY_ORGANIZATIONS.length > 0;
-  // A revoked officer loses submission access, but never loses visibility of
-  // their own existing event-request history.
   if (!canSubmitEvent && !mine.length) { el.style.display = "none"; el.innerHTML = ""; return; }
   el.style.display = "block";
   const eventButton = canSubmitEvent
@@ -595,9 +558,7 @@ async function giveFeedback(requestId) {
   showToast(result.ok ? "✅ Thank you for your feedback." : `❌ ${result.error || "Could not submit feedback."}`, result.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
-/* ──────────────────────────────────────────
-   QR MODAL
-──────────────────────────────────────────── */
+
 function showQR(reqId) {
   const req = DB.find((r) => r.id === reqId);
   if (!req) return;
@@ -616,9 +577,7 @@ function showQR(reqId) {
 }
 function closeQR() { document.getElementById("qrModal").classList.remove("open"); }
 
-/* ──────────────────────────────────────────
-   DETAIL MODAL
-──────────────────────────────────────────── */
+
 function showDetail(reqId) {
   const req = DB.find((r) => r.id === reqId);
   if (!req) return;
@@ -651,9 +610,7 @@ function showDetail(reqId) {
 }
 function closeDetail() { document.getElementById("detailModal").classList.remove("open"); }
 
-/* ──────────────────────────────────────────
-   SUBMIT REQUEST
-──────────────────────────────────────────── */
+
 function quickRequest(docKey) {
   goTo("page-request");
   setTimeout(() => {
@@ -708,9 +665,7 @@ async function submitRequest() {
   setTimeout(() => goTo("page-student"), 900);
 }
 
-/* ──────────────────────────────────────────
-   ADMIN PAGE
-──────────────────────────────────────────── */
+
 function renderAdminPage() {
   renderAdminKPIs();
   renderAdminActivity();
@@ -836,8 +791,6 @@ function setAdminRequestPage(page) {
   adminRequestPage = Math.max(1, page);
   renderAdminTable();
 }
-
-// Approve/reject/etc. — calls the API, reloads fresh state, re-renders.
 async function adminAction(reqId, newStatus, reason) {
   const { ok, error } = await api(`/api/requests/${encodeURIComponent(reqId)}`, { method: "PATCH", body: { status: newStatus, reason } });
   if (!ok) { showToast(`❌ ${error || "Could not update request."}`, "rgba(155,22,22,.85)"); return; }
@@ -903,9 +856,7 @@ function openAdminDetail(reqId) {
 }
 function closeAdminDetail() { document.getElementById("adminDetailModal").classList.remove("open"); }
 
-/* ──────────────────────────────────────────
-   QUEUE
-──────────────────────────────────────────── */
+
 function renderQueue() {
   const servedCount = queueData.filter((q) => q.served).length;
   const qs = (document.getElementById("queueSearch")?.value || "").trim().toLowerCase();
@@ -936,8 +887,6 @@ function renderQueue() {
 }
 
 function viewAllAppointments() {
-  // The modal starts inside the dashboard markup. Move it to <body> before
-  // opening so the dashboard stacking layer cannot place it under the navbar.
   const modal = document.getElementById("allQueueModal");
   if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
   renderAllAppointments();
@@ -979,9 +928,7 @@ async function serveQueue(qNum) {
   renderAuditLog();
 }
 
-/* ──────────────────────────────────────────
-   CHARTS
-──────────────────────────────────────────── */
+
 function renderCharts() {
   const pending = DB.filter((r) => r.status === "Pending").length;
   const approved = DB.filter((r) => r.status === "Approved" || r.status === "Ready to Claim" || r.status === "Completed").length;
@@ -1022,18 +969,14 @@ function renderCharts() {
   }
 }
 
-/* ──────────────────────────────────────────
-   AUDIT LOG
-──────────────────────────────────────────── */
+
 function renderAuditLog() {
   const color = { INFO: "#4ade80", WARN: "#facc15", ERROR: "#f87171" };
   document.getElementById("auditLog").innerHTML =
     [...auditLogs].reverse().map((l) => `<div><span style="color:${color[l.type] || "#fff"};">[${l.type}]</span> ${l.ts} — ${l.msg}</div>`).join("");
 }
 
-/* ──────────────────────────────────────────
-   CALENDAR & APPOINTMENT
-──────────────────────────────────────────── */
+
 function buildCalendar() {
   const container = document.getElementById("calendar");
   const year = appointmentCalendarYear, month = appointmentCalendarMonth;
@@ -1162,10 +1105,7 @@ function selectRescheduleSlot(t) {
   buildRescheduleSlots();
 }
 
-/* ──────────────────────────────────────────
-   SCANNER (client-side demo affordance — the real, backend-verified flow
-   is "Verify by Reference" below via verifyRef())
-──────────────────────────────────────────── */
+
 function simulateScan(type) {
   document.getElementById("scanResultValid").style.display = "none";
   document.getElementById("scanResultInvalid").style.display = "none";
@@ -1177,9 +1117,7 @@ function markClaimed() {
   showToast("📦 REQ-2026-042 marked as claimed.");
 }
 
-/* ──────────────────────────────────────────
-   HELPERS
-──────────────────────────────────────────── */
+
 function badgeClass(status) { return { Pending: "badge-pending", Approved: "badge-approved", "Ready to Claim": "badge-ready", Rejected: "badge-rejected", Completed: "badge-completed" }[status] || "badge-pending"; }
 function togglePass(id, btn) { const el = document.getElementById(id); el.type = el.type === "password" ? "text" : "password"; btn.querySelector("i").className = el.type === "password" ? "fa-solid fa-eye" : "fa-solid fa-eye-slash"; }
 function validateStudNum(el) { const valid = /^\d{4}-\d{5}-SP-\d$/.test(el.value); const h = document.getElementById("studNumHelper"); if (el.value.length > 3) { el.style.borderColor = valid ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.5)"; h.innerHTML = valid ? '<i class="fa-solid fa-circle-check" style="color:#4ade80;margin-right:3px;"></i><span style="color:#4ade80;">Valid format</span>' : '<i class="fa-solid fa-triangle-exclamation" style="color:#f87171;margin-right:3px;"></i><span style="color:#f87171;">Format: 2024-00000-SP-0</span>'; } }
@@ -1193,10 +1131,7 @@ function updateDocHelp(val) {
   el.style.display = "block";
 }
 
-/* ──────────────────────────────────────────
-   CSV MASTERLIST IMPORT — parsing stays client-side; the parsed rows are
-   sent to the server, which replaces the masterlist table.
-──────────────────────────────────────────── */
+
 function parseCSV(text) {
   const rows = []; let row = [], field = "", q = false;
   for (let i = 0; i < text.length; i++) {
@@ -1218,13 +1153,7 @@ function parseCSV(text) {
 
 function showToast(msg, bg) { const t = document.createElement("div"); t.className = "toast"; t.style.background = bg || "rgba(139,26,26,.85)"; t.style.pointerEvents = "auto"; t.innerHTML = msg; document.getElementById("toastContainer").appendChild(t); setTimeout(() => { t.style.transition = ".3s"; t.style.opacity = "0"; t.style.transform = "translateY(8px)"; setTimeout(() => t.remove(), 300); }, 3200); }
 
-/* ══════════════════════════════════════════════════════════════
-   OSS SERVICE MODULES (referrals, ID applications, bulletin, help desk,
-   FAQ, event requests, complaints, downloadable forms, email blast)
-   Every render* function below is unchanged from the original — it reads
-   from MOD[key], populated by loadModule(key) in goTo() above. Submit /
-   update actions call the API, then reload + re-render.
-══════════════════════════════════════════════════════════════ */
+
 const APP_VERSION = "3.2.1-nextjs";
 
 function esc(s) { return (s == null ? "" : String(s)).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
@@ -1333,8 +1262,6 @@ function openAppModal({ title, subtitle = "", icon = "fa-circle-info", content =
   modal.innerHTML = `<div class="modal-box" style="max-width:${wide ? "880px" : "680px"};"><div class="app-modal-head"><div><div class="app-modal-title"><i class="fa-solid ${icon}"></i><span>${esc(title)}</span></div>${subtitle ? `<p class="app-modal-subtitle">${esc(subtitle)}</p>` : ""}</div><button class="app-modal-close" onclick="closeAppModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div><div class="app-modal-body">${content}</div></div>`;
   modal.addEventListener("click", (event) => { if (event.target === modal) closeAppModal(); });
   document.body.appendChild(modal);
-  // The organization list is rendered from one compact template. Add the
-  // permanent-remove control beside each existing revoke/reactivate action.
   if (title === "Organizations & Representatives" && isSuperAdmin()) {
     const assignments = [...(window.__qrsOrganizationRepresentatives || [])];
     modal.querySelectorAll("button").forEach((button) => {
@@ -1541,10 +1468,9 @@ async function manageStaffAccounts() {
   showToast(created.ok ? "✅ Staff account created." : `❌ ${created.error || "Could not create staff account."}`, created.ok ? undefined : "rgba(155,22,22,.85)");
 }
 
-/* ---------- admin search helper (pure client-side filter over already-loaded MOD[key]) ---------- */
+
 function matchQ(q, fields) { if (!q) return true; q = q.toLowerCase(); return fields.some((f) => (f == null ? "" : String(f)).toLowerCase().includes(q)); }
 let refAdminQ = "", idaAdminQ = "", hdAdminQ = "", evtAdminQ = "", cmpAdminQ = "";
-// Super Admin staff controls: create, edit role/name, or deactivate an account.
 async function manageStaffAccounts() {
   const list = await api("/api/users/staff");
   if (!list.ok) return showToast("Could not load staff accounts.", "rgba(155,22,22,.85)");
@@ -1623,7 +1549,7 @@ function enableRequestDropdowns(container) {
   });
 }
 
-/* ══════════ 1. REFERRAL & INTERVENTION ══════════ */
+
 const REF_STATUSES = ["Pending", "Under Review", "Approved", "Ongoing Intervention", "Completed", "Rejected"];
 function renderReferral() {
   const el = document.getElementById("referralBody");
@@ -1696,7 +1622,7 @@ async function refUpdate(id) {
   await loadModule("referrals"); renderReferral();
 }
 
-/* ══════════ 2. ID APPLICATION ══════════ */
+
 const ID_STATUSES = ["Pending", "OR Verified", "Approved", "Processing", "Ready for Claiming", "Claimed", "Rejected"];
 function renderIdApp() {
   const el = document.getElementById("idappBody");
@@ -1799,7 +1725,7 @@ async function idUpdate(id) {
   await loadModule("idapps"); renderIdApp();
 }
 
-/* ══════════ 3. MONTHLY BULLETIN ══════════ */
+
 let bulletinEditingId = null;
 function renderBulletin() {
   const el = document.getElementById("bulletinBody");
@@ -1900,7 +1826,7 @@ async function bulDelete(id) {
   await loadModule("bulletins"); renderBulletin();
 }
 
-/* ══════════ 4. HELP DESK ══════════ */
+
 let chatbotMessages = [];
 let chatbotEscalationQuestion = "";
 function renderHelpdesk() {
@@ -2039,7 +1965,7 @@ async function hdClose(id) {
   await loadModule("tickets"); renderHelpdesk();
 }
 
-/* ══════════ 5. FAQ ══════════ */
+
 let faqQuery = "";
 function renderFaq() {
   const el = document.getElementById("faqBody");
@@ -2093,7 +2019,7 @@ async function faqDelete(id) {
   await loadModule("faqs"); renderFaq();
 }
 
-/* ══════════ 6. EVENT REQUESTS (student orgs) ══════════ */
+
 const EVT_STATUSES = ["Pending", "Under Review", "Approved", "Rejected", "Needs Revision", "Completed"];
 let evtEditingId = null;
 function renderEvents2() {
@@ -2220,7 +2146,7 @@ async function evtUpdate(id) {
   await loadModule("events2"); renderEvents2();
 }
 
-/* ══════════ 7. COMPLAINTS (confidential) ══════════ */
+
 const CMP_STATUSES = ["Submitted", "Under Investigation", "Resolved", "Dismissed"];
 function renderComplaint() {
   const el = document.getElementById("complaintBody");
@@ -2313,7 +2239,7 @@ async function cmpUpdate(id) {
   await loadModule("complaints"); renderComplaint();
 }
 
-/* ══════════ 8. DOWNLOADABLE FORMS ══════════ */
+
 function renderForms() {
   const el = document.getElementById("formsBody");
   let adminForm = "";
@@ -2367,7 +2293,7 @@ async function frmDelete(id) {
   await loadModule("forms"); renderForms();
 }
 
-/* ══════════ 9. EMAIL BLAST / MEMO (admin) ══════════ */
+
 function renderMemo() {
   const el = document.getElementById("memoBody");
   const courses = ["BSCS", "BSIT", "BSBA", "BSA", "BEED"];
@@ -2433,7 +2359,7 @@ function memoRecipientOptions() {
   label.title = isMasterlistOnly ? "CSV Masterlist Unregistered is already selected." : "";
 }
 
-/* ══════════ v3.1 — CLAIM REFS, RECEIPTS, VERIFY ══════════ */
+
 function printReceipt(reqId) {
   const req = DB.find((r) => r.id === reqId);
   if (!req) return;
@@ -2502,7 +2428,7 @@ function printApproval(reqId) {
   w.document.write(html); w.document.close();
 }
 
-/** Verify a REQ or CLM reference (admin/scanner side) — real backend lookup. */
+
 async function verifyRef() {
   const q = (document.getElementById("verifyRefInput").value || "").trim();
   const box = document.getElementById("verifyRefResult");
@@ -2546,7 +2472,7 @@ async function verifyRef() {
   showToast("✅ Record verified.", "rgba(21,128,61,.85)");
 }
 
-/* ══════════ v3.2 — NOTIFICATION BELL ══════════ */
+
 function myNotifs() { return NOTIFS; } // server already scopes this to the caller
 function updateBellBadge() {
   const b = document.getElementById("bellBadge");
@@ -2572,7 +2498,7 @@ function playNotificationSound() {
       oscillator.start(context.currentTime + index * 0.1);
       oscillator.stop(context.currentTime + 0.32);
     });
-  } catch (_) { /* Browser audio is optional. */ }
+  } catch (_) {  }
 }
 function startNotificationPolling() {
   if (notificationPollingStarted) return;
@@ -2679,7 +2605,7 @@ function renderBellPanel() {
         </button>`).join("")
       : '<div style="padding:22px;text-align:center;font-size:12px;color:rgba(30,5,5,.5);">No notifications yet.</div>'}
     </div>`;
-  // Notifications that are not acted on stay unread but soften after 7 seconds.
+  
   window.setTimeout(() => p.querySelectorAll("button[data-notification-id]").forEach((item) => {
     if (!NOTIFS.find((n) => n.id === item.dataset.notificationId)?.read) item.style.opacity = ".62";
   }), 7000);
@@ -2692,7 +2618,7 @@ async function clearMyNotifs() {
   const p = document.getElementById("bellPanel"); if (p) p.style.display = "none";
 }
 
-/* ══════════ v3.2 — STUDENT ACCOUNT APPROVALS (admin) ══════════ */
+
 function renderAcctApprovals() {
   const wrap = document.getElementById("acctApprovalsWrap");
   if (!wrap) return;
@@ -2735,7 +2661,7 @@ async function acctReject(sn) {
   renderAcctApprovals(); renderAuditLog();
 }
 
-/* ══════════ v3.2 — email outbox ══════════ */
+
 function renderEmailOutbox() {
   const badge = document.getElementById("emailModeBadge");
   if (badge) {
@@ -2765,7 +2691,7 @@ function renderEmailOutbox() {
     </div>`).join("");
 }
 
-/* ══════════ v3.2.1 — REASON FOR REJECTION ══════════ */
+
 let rejectTargetId = null;
 function openRejectModal(reqId) {
   const req = DB.find((r) => r.id === reqId);
@@ -2788,7 +2714,7 @@ function confirmReject() {
   if (id) adminAction(id, "Rejected", reason);
 }
 
-/* ---------- version badge ---------- */
+
 function mountVersionBadge() {
   const vb = document.createElement("div");
   vb.style.cssText = "position:fixed;bottom:8px;right:12px;font-size:10px;font-weight:800;color:rgba(30,5,5,.45);z-index:60;pointer-events:none;letter-spacing:.04em;";
@@ -2796,9 +2722,7 @@ function mountVersionBadge() {
   document.body.appendChild(vb);
 }
 
-/* ──────────────────────────────────────────
-   INIT
-──────────────────────────────────────────── */
+
 (async function init() {
   mountVersionBadge();
   document.addEventListener("pointerdown", (event) => {
@@ -2827,7 +2751,7 @@ window.doForgotPassword = function doForgotPassword() {
 
 })();
 
-/* Themed controls for recently added management features. */
+
 async function openReports() {
   const result = await api("/api/reports/analytics");
   if (!result.ok) return showToast("Could not load analytics.", "rgba(155,22,22,.85)");
@@ -3108,19 +3032,12 @@ async function resolveProfileChange(id, status) {
   if (!result.ok) return showToast(result.error || "Could not update profile.", "rgba(155,22,22,.85)");
   showToast(`Profile update ${status.toLowerCase()}.`); reviewProfileChanges();
 }
-
-// Apply staff request status changes immediately, then reconcile dashboard data.
-// This prevents the Approve → Ready to Claim → Complete flow from requiring a
-// full browser refresh between each action.
 async function adminAction(reqId, newStatus, reason) {
   const { ok, data, error } = await api(`/api/requests/${encodeURIComponent(reqId)}`, {
     method: "PATCH",
     body: { status: newStatus, reason },
   });
   if (!ok) {
-    // A legacy deployment can save the status but fail while attempting an
-    // optional email/log. Refresh the table immediately in that case instead
-    // of requiring staff to reload the entire page.
     await Promise.all([loadRequests(), loadAuditLog(), loadEmailLog(), loadAdminActivity()]);
     renderAdminPage();
     showToast(error || "Could not update request.", "rgba(155,22,22,.85)");
@@ -3140,8 +3057,7 @@ async function adminAction(reqId, newStatus, reason) {
   return true;
 }
 
-/* Production QR/PDF/live-update layer. These definitions intentionally
-   replace the old prototype scanner and print-popup flows above. */
+
 function downloadRequestPdf(reqId, type) {
   window.location.assign(`/api/requests/${encodeURIComponent(reqId)}/pdf?type=${encodeURIComponent(type)}`);
 }
@@ -3153,7 +3069,7 @@ function startLiveUpdates() {
   liveEventSource = new EventSource("/api/events");
   liveEventSource.addEventListener("refresh", refreshLiveData);
   liveEventSource.addEventListener("connected", refreshLiveData);
-  liveEventSource.onerror = () => { /* EventSource reconnects automatically. */ };
+  liveEventSource.onerror = () => {  };
 }
 async function refreshLiveData() {
   if (!session || Date.now() - liveRefreshAt < 2500) return;
@@ -3203,9 +3119,6 @@ async function startScanner() {
       await stopScanner();
       await completeScannedQr(decodedText);
     };
-    // Phones prefer the rear camera. Desktop/laptop cameras commonly have no
-    // `environment` device, so fall back to the first real camera instead of
-    // rejecting an already-granted browser permission.
     try {
       await qrScanner.start({ facingMode: "environment" }, config, onScan, () => {});
     } catch (preferredCameraError) {

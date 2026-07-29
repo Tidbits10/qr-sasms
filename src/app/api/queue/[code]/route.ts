@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 
-// PATCH /api/queue/:code  { served: true }
+
 export async function PATCH(req: NextRequest, { params }: { params: { code: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

@@ -4,7 +4,7 @@ import { requireSession, jsonError } from "@/lib/http";
 
 function csvCell(value: unknown) {
   const text = String(value ?? "").replace(/"/g, '""');
-  // Prefix spreadsheet formulas so exported data cannot execute in Excel.
+  
   const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
   return `"${safe}"`;
 }

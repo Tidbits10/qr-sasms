@@ -11,7 +11,7 @@ export type MasterlistValues = {
   schoolYear: string;
 };
 
-/** A school year must be consecutive four-digit years, e.g. 2026-2027. */
+
 export function isValidSchoolYear(value: string): boolean {
   const match = SCHOOL_YEAR_PATTERN.exec(value.trim());
   if (!match) return false;

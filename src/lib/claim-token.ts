@@ -3,7 +3,7 @@ import { randomBytes } from "crypto";
 export const CLAIM_QR_PREFIX = "QRS1.";
 export const CLAIM_TOKEN_TTL_HOURS = 72;
 
-/** A high-entropy, opaque value which is safe to encode in a QR code. */
+
 export function createClaimToken() {
   return `${CLAIM_QR_PREFIX}${randomBytes(32).toString("base64url")}`;
 }

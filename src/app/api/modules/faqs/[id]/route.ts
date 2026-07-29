@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, jsonError } from "@/lib/http";
 import { addAudit } from "@/lib/notify";
 
-// DELETE /api/modules/faqs/:id — admin only.
+
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

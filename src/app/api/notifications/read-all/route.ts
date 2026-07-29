@@ -8,8 +8,8 @@ function targetsFor(session: SessionPayload) {
   return [session.studentId || session.email, "students"];
 }
 
-// POST /api/notifications/read-all — marks the caller's notifications read
-// (fired when the bell dropdown is opened, matching the original toggleBell()).
+
+
 export async function POST() {
   const auth = await requireSession();
   if (auth instanceof NextResponse) return auth;

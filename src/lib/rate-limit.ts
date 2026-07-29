@@ -3,8 +3,7 @@ import { NextRequest } from "next/server";
 type Entry = { count: number; resetAt: number };
 const buckets = new Map<string, Entry>();
 
-/** Lightweight per-process protection for login/reset endpoints. Use a shared
- * store (Redis/database) as well when deploying more than one server. */
+
 export function allowRequest(req: NextRequest, scope: string, limit: number, windowMs: number) {
   const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const key = `${scope}:${forwarded || req.headers.get("x-real-ip") || "local"}`;

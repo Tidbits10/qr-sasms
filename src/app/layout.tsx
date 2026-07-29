@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 
-// This <head> reproduces the original static file's <head> tag for tag
-// (same title, same three CDN scripts, same Google Font, same stylesheet —
-// now loaded from globals.css instead of an inline <style> block, but with
-// byte-for-byte identical CSS rules). No visual/design change.
+
+
+
+
 export const metadata: Metadata = {
   title: "QR-SASMS — PUP San Pedro SSO",
 };

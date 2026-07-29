@@ -5,7 +5,7 @@ import { addAudit } from "@/lib/notify";
 import { normSN } from "@/lib/format";
 import { masterlistValidationError } from "@/lib/masterlist-validation";
 
-// PATCH /api/masterlist/:sn  { name?, email?, course?, year? } — edit one masterlist entry.
+
 export async function PATCH(req: NextRequest, { params }: { params: { sn: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;
@@ -32,8 +32,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { sn: string
   await addAudit("INFO", `Masterlist entry ${sn} updated by ${auth.email}.`);
   return NextResponse.json(updated);
 }
-
-// DELETE /api/masterlist/:sn — remove a single masterlist entry.
 export async function DELETE(req: NextRequest, { params }: { params: { sn: string } }) {
   const auth = await requireSession(["admin"]);
   if (auth instanceof NextResponse) return auth;

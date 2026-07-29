@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 import type { DocumentRequest } from "@prisma/client";
 import { shortDate, dateSort } from "./format";
 
-// Document types handled by the Student Services Office.
+
 export const DOC_LABELS: Record<string, string> = {
   gmc: "Excuse Slip",
   auth: "Authentication",
@@ -10,7 +10,7 @@ export const DOC_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-/** Sequential REQ-<year>-<NNN>, continuing the running counter across all requests. */
+
 export async function nextRequestId(): Promise<string> {
   const all = await prisma.documentRequest.findMany({ select: { id: true } });
   const maxN = all.reduce((max, r) => {
@@ -22,13 +22,12 @@ export async function nextRequestId(): Promise<string> {
   return `REQ-${year}-${String(maxN + 1).padStart(3, "0")}`;
 }
 
-/** Sequential, collision-safe CLM-<year>-<NNNNN>, matching the original nextClaimRef(). */
+
 export async function nextClaimRef(): Promise<string> {
   const year = new Date().getFullYear();
   const count = await prisma.documentRequest.count({ where: { claimRef: { not: null } } });
   let n = count + 1;
   let ref = "";
-  // Practically this never loops more than once, but guard against races.
   for (let attempts = 0; attempts < 1000; attempts++) {
     ref = `CLM-${year}-${String(n).padStart(5, "0")}`;
     const clash = await prisma.documentRequest.findUnique({ where: { claimRef: ref } });
@@ -38,7 +37,7 @@ export async function nextClaimRef(): Promise<string> {
   return ref;
 }
 
-/** Shapes a DocumentRequest row exactly like the object the original client code expects. */
+
 export function serializeRequest(r: DocumentRequest) {
   return {
     id: r.id,
@@ -59,8 +58,6 @@ export function serializeRequest(r: DocumentRequest) {
     reuploadUrl: r.reuploadUrl || undefined,
     signature: r.signature || undefined,
     claimRef: r.claimRef || undefined,
-    // The token is intentionally opaque and only issued while this release is
-    // still eligible. Never expose request metadata through the QR payload.
     qrToken: r.status === "Ready to Claim" ? r.claimToken || undefined : undefined,
     qrExpiresAt: r.status === "Ready to Claim" ? r.claimTokenExpiry?.toISOString() || undefined : undefined,
     claimedAt: r.claimedAt || undefined,
